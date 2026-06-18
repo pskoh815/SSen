@@ -1,0 +1,16 @@
+# 데이터/로그 (대용량, 재생성 가능 — ingest/backfill로 다시 만들 수 있음)
+data/
+logs/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# 환경변수/비밀 (.env에 DATA_GO_KR_KEY 등 포함 — 절대 커밋 금지)
+.env
+.env.*
+
+# 런타임 PID/임시 (run.ps1 api_bg가 기록)
+.run/

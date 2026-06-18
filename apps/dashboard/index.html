@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SSen 주도주 대시보드</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ═══ SSen Design System — StockInsight2 계열 (docs/design_system.md) ═══ */
+  :root {
+    /* 표면 */
+    --bg-base:       #04111f;
+    --bg-panel:      #071a2e;
+    --bg-card:       #0a2240;
+    --bg-card-hover: #0d2b50;
+    --bg-input:      #061526;
+    /* 액센트 */
+    --accent1:       #3a9fd8;   /* 시그널 블루 */
+    --accent2:       #e05e30;   /* 시그널 오렌지 */
+    --accent-green:  #1fb87a;
+    --gold:          #e8b84b;
+    /* 한국 시장 관례: 상승=주황, 하락=청 */
+    --up:            #e05e30;
+    --dn:            #3a9fd8;
+    --neu:           #6b8499;
+    /* 라인/텍스트 */
+    --border:        rgba(58,159,216,.18);
+    --border-bright: rgba(58,159,216,.45);
+    --text-primary:  #ddeeff;
+    --text-secondary:#7fa8cc;
+    --text-muted:    #3d6080;
+    --glow1:         rgba(58,159,216,.25);
+    --glow2:         rgba(224,94,48,.25);
+    --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+  }
+  a { color: var(--accent1); }
+
+  .app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+
+  /* ── Header ── */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 14px 18px; background: var(--bg-panel);
+    border: 1px dashed var(--border-bright); border-radius: var(--radius-lg);
+    margin-bottom: 12px; flex-wrap: wrap; gap: 12px;
+  }
+  .header h1 {
+    font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em;
+    color: var(--text-primary); display: flex; align-items: center; gap: 9px;
+  }
+  .header h1 .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--accent1); box-shadow: 0 0 8px var(--accent1);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
+  .meta-badge { display: flex; gap: 18px; font-size: 11.5px; color: var(--text-muted); }
+  .meta-badge span { display: flex; flex-direction: column; }
+  .meta-badge .val { color: var(--text-primary); font-weight: 600; margin-top: 2px; }
+  .meta-badge .fresh { color: var(--accent-green); }
+
+  /* ── Controls ── */
+  .controls {
+    display: flex; gap: 10px; align-items: center; padding: 12px 16px;
+    background: var(--bg-panel); border: 1px dashed var(--border-bright);
+    border-radius: var(--radius-lg); margin-bottom: 12px; flex-wrap: wrap;
+  }
+  .controls label { color: var(--text-secondary); font-size: 12px; margin-right: 4px; }
+  .controls input[type=date] {
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text-primary); padding: 6px 10px;
+    border-radius: var(--radius-sm); font-size: 13px;
+    color-scheme: dark;
+  }
+  .controls input[type=date]:focus { outline: none; border-color: var(--accent1); box-shadow: 0 0 0 3px var(--glow1); }
+  .btn { padding: 7px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; font-family: inherit; }
+  .btn-primary { background: var(--accent1); color: #fff; box-shadow: 0 0 12px var(--glow1); }
+  .btn-primary:hover { background: #4db0e8; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-ghost:hover { border-color: var(--border-bright); color: var(--text-primary); }
+  #year-select { color-scheme: dark; }
+  #year-select option { background: var(--bg-card); color: var(--text-primary); }
+  .shortcuts { display: flex; gap: 6px; }
+
+  /* ── Tabs ── */
+  .tab-nav { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .tab-btn {
+    padding: 9px 20px; background: none; border: none; color: var(--text-muted);
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    transition: color .15s, border-color .15s;
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active { color: var(--accent1); border-bottom-color: var(--accent1); text-shadow: 0 0 12px var(--glow1); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ── Summary cards ── */
+  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 12px; }
+  @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  .card {
+    background: var(--bg-card); border: 1px dashed var(--border-bright);
+    border-radius: var(--radius-md); padding: 14px 16px;
+    transition: background .15s, border-color .15s;
+  }
+  .card:hover { background: var(--bg-card-hover); box-shadow: 0 0 10px var(--glow1); }
+  .card .label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
+  .card .value { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+  .card .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .pos { color: var(--up); } .neg { color: var(--dn); } .neu { color: var(--gold); }
+
+  /* ── Section ── */
+  .section { background: var(--bg-panel); border: 1px dashed var(--border-bright); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
+  .section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 14px; font-weight: 600; }
+  .section-body { padding: 16px; }
+  .sec-hint {
+    font-size: 11.5px; color: var(--text-secondary); margin-bottom: 10px;
+    padding: 7px 12px; background: rgba(58,159,216,.07);
+    border-left: 2px solid var(--accent1);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  }
+
+  /* ── 테마 칩 (테마 추이) ── */
+  .theme-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .chip {
+    padding: 4px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
+    cursor: pointer; border: 1px solid var(--border);
+    background: var(--bg-panel); color: var(--text-secondary); transition: all .15s;
+  }
+  .chip:hover { border-color: var(--border-bright); color: var(--text-primary); }
+  .chip.sel { color: #fff; font-weight: 700; }
+  .trend-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+  .tleg-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); }
+  .tleg-line { width: 18px; height: 3px; border-radius: 2px; }
+
+  /* ── Timeline ── */
+  #timeline-container { overflow-x: auto; padding-bottom: 8px; }
+  #timeline-wrap { min-width: 900px; }
+  .tl-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 4px; }
+  .tl-track { height: 36px; background: var(--bg-input); border-radius: var(--radius-sm); position: relative; overflow: hidden; }
+  .tl-bar { position: absolute; height: 100%; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 600; color: #fff; cursor: pointer; transition: opacity .1s; border-radius: 2px; white-space: nowrap; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+  .tl-bar:hover { opacity: .8; z-index: 10; }
+  .tl-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .tl-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); }
+  .tl-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 8px 12px; text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
+  th:hover { color: var(--text-primary); }
+  th .sort-icon { margin-left: 4px; opacity: .4; }
+  th.sorted .sort-icon { opacity: 1; color: var(--accent1); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+  tr.selected td { background: rgba(58,159,216,.12); }
+  tr:hover td { background: rgba(58,159,216,.05); cursor: pointer; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-green { background: rgba(31,184,122,.15); color: var(--accent-green); }
+  .badge-red { background: rgba(224,94,48,.15); color: var(--accent2); }
+  .badge-yellow { background: rgba(232,184,75,.15); color: var(--gold); }
+  .badge-blue { background: rgba(58,159,216,.15); color: var(--accent1); }
+
+  /* ── Explain panel ── */
+  .explain-grid { display: grid; grid-template-columns: 0.8fr 0.8fr 1.4fr; gap: 16px; }
+  @media (max-width: 1100px) { .explain-grid { grid-template-columns: 1fr; } }
+  .explain-block { background: var(--bg-card); border: 1px dashed var(--border-bright); border-radius: var(--radius-md); padding: 14px; }
+  .explain-block h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+  .explain-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .explain-row:last-child { border: none; }
+  .explain-key { color: var(--text-secondary); }
+  .rationale-text { font-size: 13px; line-height: 1.7; color: var(--text-primary); background: var(--bg-card); border: 1px dashed var(--border-bright); border-radius: var(--radius-md); padding: 14px; }
+  .explain-chart { margin-top: 16px; }
+  .rationale-text .step { margin-bottom: 8px; display: flex; gap: 8px; }
+  .rationale-text .step-num { background: var(--accent1); color: #fff; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 6px var(--glow1); }
+
+  /* ── Filter bar ── */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .filter-bar input, .filter-bar select {
+    background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary);
+    padding: 5px 10px; border-radius: var(--radius-sm); font-size: 12px; font-family: inherit;
+  }
+  .filter-bar input { width: 160px; }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent1); }
+  .filter-count { font-size: 12px; color: var(--text-muted); }
+
+  /* ── Period analysis ── */
+  .period-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .period-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  @media (max-width: 900px) { .period-grid2, .period-grid3 { grid-template-columns: 1fr; } }
+  .chart-box { background: var(--bg-panel); border: 1px dashed var(--border-bright); border-radius: var(--radius-lg); padding: 16px; }
+  .chart-box h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); }
+  .chart-box .sub-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  .chart-container { position: relative; }
+
+  /* ── Coverage gauge ── */
+  .cov-bar { display: inline-block; width: 60px; height: 8px; background: rgba(58,159,216,.12); border-radius: 4px; vertical-align: middle; overflow: hidden; }
+  .cov-fill { height: 100%; background: var(--accent1); border-radius: 4px; box-shadow: 0 0 4px var(--glow1); }
+
+  /* ── State ── */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-muted); gap: 10px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent1); border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty { text-align: center; padding: 40px; color: var(--text-muted); }
+  .error { color: var(--accent2); padding: 12px 16px; background: rgba(224,94,48,.08); border: 1px solid rgba(224,94,48,.25); border-radius: var(--radius-sm); margin: 12px 0; }
+  .placeholder { text-align: center; padding: 40px; color: var(--text-muted); }
+  .placeholder .icon { font-size: 32px; margin-bottom: 8px; }
+
+  /* ── Treemap ── */
+  .treemap-wrap { position: relative; width: 100%; height: 300px; background: var(--bg-input); border-radius: var(--radius-sm); overflow: hidden; }
+  .tm-cell { position: absolute; box-sizing: border-box; border: 1px solid rgba(4,17,31,.55); overflow: hidden; cursor: pointer; transition: filter .12s; }
+  .tm-cell:hover { filter: brightness(1.25); z-index: 10; }
+  .tm-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; pointer-events: none; }
+  .tm-name { font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+  .tm-ret  { margin-top: 2px; font-weight: 600; color: rgba(255,255,255,.92); text-shadow: 0 1px 2px rgba(0,0,0,.8); }
+  .tm-tooltip { position: fixed; background: rgba(7,26,46,.97); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 12px 16px; font-size: 13px; pointer-events: none; z-index: 9999; min-width: 195px; box-shadow: 0 8px 32px rgba(0,0,0,.65); display: none; }
+  .tm-tooltip .tt-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--text-primary); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+  .tm-tooltip .tt-row { display: flex; justify-content: space-between; gap: 20px; padding: 4px 0; }
+  .tm-tooltip .tt-key { color: var(--text-muted); }
+  .tm-tooltip .tt-val { color: var(--text-primary); font-weight: 600; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header h1 .dot { animation: none; }
+    .spinner { animation-duration: 1.6s; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1><span class="dot"></span>SSen 주도주 대시보드</h1>
+    <div class="meta-badge" id="meta-badge">
+      <span><small>데이터 기준일</small><span class="val" id="meta-max-date">-</span></span>
+      <span><small>마지막 업데이트</small><span class="val" id="meta-updated">-</span></span>
+      <span><small>버전</small><span class="val" id="meta-version">-</span></span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <label>시작일</label>
+    <input type="date" id="start-date" onchange="onStartDateChange()">
+    <label>종료일</label>
+    <input type="date" id="end-date" onchange="onEndDateChange()">
+    <button class="btn btn-primary" onclick="doQuery()">조회</button>
+    <div class="shortcuts">
+      <button class="btn btn-ghost" onclick="setShortcutDays(7)">1주</button>
+      <button class="btn btn-ghost" onclick="setShortcut(1)">1개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(3)">3개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(6)">6개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(12)">1년</button>
+      <select id="year-select" class="btn btn-ghost" onchange="setYear(this.value)">
+        <option value="">연도 선택</option>
+        <option value="2020">2020년</option>
+        <option value="2021">2021년</option>
+        <option value="2022">2022년</option>
+        <option value="2023">2023년</option>
+        <option value="2024">2024년</option>
+        <option value="2025">2025년</option>
+        <option value="2026">2026년</option>
+      </select>
+      <button class="btn btn-ghost" onclick="setShortcut(0)">전체</button>
+    </div>
+    <span id="query-status" style="font-size:12px;color:var(--text-muted);"></span>
+  </div>
+
+  <!-- Tab nav -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('trade',this)">트레이드</button>
+    <button class="tab-btn" onclick="switchTab('period',this)">기간분석</button>
+  </div>
+
+  <!-- Error -->
+  <div id="error-msg" class="error" style="display:none;"></div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- Tab: 트레이드 -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-trade" class="tab-panel active">
+
+    <!-- Summary Cards -->
+    <div class="cards">
+      <div class="card">
+        <div class="label">총 거래</div>
+        <div class="value" id="c-total">-</div>
+        <div class="sub" id="c-closed">-</div>
+      </div>
+      <div class="card">
+        <div class="label">승률</div>
+        <div class="value" id="c-winrate">-</div>
+        <div class="sub">체결 완료 기준</div>
+      </div>
+      <div class="card">
+        <div class="label">평균 수익률</div>
+        <div class="value" id="c-avg-pnl">-</div>
+        <div class="sub">수수료 제외</div>
+      </div>
+      <div class="card">
+        <div class="label">누적 수익률</div>
+        <div class="value" id="c-total-pnl">-</div>
+        <div class="sub">복리 기준</div>
+      </div>
+      <div class="card">
+        <div class="label">MDD</div>
+        <div class="value" id="c-mdd">-</div>
+        <div class="sub">최대 낙폭</div>
+      </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📊 주도 테마 레짐 타임라인</h2>
+        <span id="regime-count" style="font-size:12px;color:var(--text-muted);"></span>
+      </div>
+      <div class="section-body">
+        <div id="timeline-container"><div class="placeholder"><div class="icon">📅</div>기간을 선택하고 조회하세요</div></div>
+      </div>
+    </div>
+
+    <!-- Trade Table -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📋 트레이드 로그</h2>
+      </div>
+      <div class="section-body">
+        <div class="filter-bar">
+          <input type="text" id="filter-text" placeholder="종목명 / 테마 검색..." oninput="applyFilter()">
+          <select id="filter-reason" onchange="applyFilter()">
+            <option value="">청산 사유 (전체)</option>
+            <option value="regime_end">regime_end</option>
+            <option value="stop_loss">stop_loss</option>
+            <option value="take_profit">take_profit</option>
+            <option value="open">미체결(open)</option>
+          </select>
+          <select id="filter-pnl" onchange="applyFilter()">
+            <option value="">수익/손실 (전체)</option>
+            <option value="win">수익 (양수)</option>
+            <option value="loss">손실 (음수)</option>
+          </select>
+          <span class="filter-count" id="filter-count"></span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th onclick="sortTable('signal_date')">신호일 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('entry_date')">진입일(t+1) <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('name')">종목 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('theme1')">테마 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('entry_price')">진입가 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('exit_date')">청산일 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('exit_price')">청산가 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('net_pnl_pct')">순수익률 <span class="sort-icon">↕</span></th>
+                <th onclick="sortTable('hold_days')">보유일 <span class="sort-icon">↕</span></th>
+                <th>청산 사유</th>
+              </tr>
+            </thead>
+            <tbody id="trade-tbody">
+              <tr><td colspan="10" class="placeholder"><div class="icon">📋</div>조회 결과가 여기에 표시됩니다</td></tr>
+            </tbody>
+          </table>
+          <div style="text-align:center;margin-top:8px" id="trade-table-more"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explainability Panel -->
+    <div class="section">
+      <div class="section-header">
+        <h2>💡 근거 패널 (Explainability)</h2>
+        <span style="font-size:12px;color:var(--text-muted);">트레이드 행을 클릭하면 상세 근거를 확인합니다</span>
+      </div>
+      <div class="section-body" id="explain-body">
+        <div class="placeholder"><div class="icon">💡</div>트레이드 행을 클릭하세요</div>
+      </div>
+    </div>
+
+    <!-- SuperTrend 주도테마 돌파 전략 -->
+    <div class="section">
+      <div class="section-header">
+        <h2>🚀 기준선 지지 + RS 추세 전략</h2>
+        <span style="font-size:12px;color:var(--text-muted);">압도적 주도테마·강세 주도종목/이벤트 후보군 대상 변동성 수축(5봉 5%이내)·RS 추세·시장 국면 필터 통과 시 매수, -5% 손절/+10% 1차 익절(1/3)+USAF 추세추종 (포트폴리오 10슬롯)</span>
+      </div>
+      <div class="section-body">
+        <div class="sec-hint">
+          후보: 최근 60일 이내에 ⓐ 압도적 주도 테마일의 theme1_rank≤2 종목 또는 ⓑ 강세 주도종목/이벤트(기여점수≥4)에
+          1회 이상 해당된 종목 중,
+          아래 5개 조건을 모두 만족하는 날(N)의 종가에 매수 →
+          ① 최근 5봉 모두 (고가-저가)/저가*100 &lt;= 5% (변동성 수축: 최근 5봉 모두 일중 변동폭이 5% 이내인 좁은 가격대)
+          ② Lowest(저가,15) &gt; (Highest(고가,60)+Lowest(저가,60))/2 AND Lowest(저가,20) &gt; EMA(종가,60)
+          ③ EMA(종가,60) &gt; EMA(종가,120) AND EMA(종가,120) &gt; EMA(종가,240) (장기 이평 정배열)
+          ④ RS점수 ≥85 AND RS점수 &gt; 코스피의 RS점수
+          ⑤ 코스피 종가 &gt; 코스피 EMA(20) AND 코스피 종가 &gt; 코스피 EMA(60) (시장 국면 필터: 코스피 하락 추세 시 매수 신호 무효)
+          →
+          매수가 대비 종가 기준 -5% 이하 손절(전량), +10% 이상이면 1차 익절(보유 1/3 매도)하고 잔여 2/3는
+          USAF v2.0(만능 매도 가속 감지 공식: RSI 모멘텀 붕괴·거래량 이상 팽창·이평 이탈·국면 가중을 정규화해
+          가중합, USAF≥0.5이면 강한 매도 신호)에 따라 추세추종, 신호 발생 시 잔여 전량 매도.
+          포트폴리오: 동시 보유 10슬롯(슬롯당 자금 1/10)에 진입일 순서로 배정, 빈 슬롯이 없으면 해당 거래는 자금 부족으로 제외 →
+          청산 이벤트 순서의 슬롯 합산 자본으로 누적수익률/MDD 산출
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="label">총 거래</div>
+            <div class="value" id="st-total">-</div>
+            <div class="sub" id="st-closed">-</div>
+          </div>
+          <div class="card">
+            <div class="label">승률</div>
+            <div class="value" id="st-winrate">-</div>
+            <div class="sub">청산 완료 기준</div>
+          </div>
+          <div class="card">
+            <div class="label">평균 수익률</div>
+            <div class="value" id="st-avg-pnl">-</div>
+            <div class="sub">건당</div>
+          </div>
+          <div class="card">
+            <div class="label">누적 수익률</div>
+            <div class="value" id="st-total-pnl">-</div>
+            <div class="sub">복리 기준(10슬롯 동시운용)</div>
+          </div>
+          <div class="card">
+            <div class="label">MDD</div>
+            <div class="value" id="st-mdd">-</div>
+            <div class="sub">최대 낙폭</div>
+          </div>
+        </div>
+        <div class="table-wrap" id="st-table"></div>
+      </div>
+    </div>
+
+    <!-- RS≥85 + 거래대금 1천억 + 슈퍼트렌드 돌파 전략 -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📊 RS강세 거래대금 슈퍼트렌드 돌파 전략</h2>
+        <span style="font-size:12px;color:var(--text-muted);">RS점수≥85 + 50일 이내 거래대금 1천억 + 슈퍼트렌드(21,3) 첫 돌파 후 단봉 매수</span>
+      </div>
+      <div class="section-body">
+        <div class="sec-hint">
+          종목 선정: ① RS점수(20/60/120/250일 수익률 가중 백분위, 가중치 10/30/20/40%) ≥85 ② 그 날로부터 50거래일 이내(당일 포함)
+          당일 거래대금 ≥1,000억원 발생 →
+          매수 조건: ③ 그 이후 슈퍼트렌드(21,3) 첫 상승전환일의 슈퍼트렌드 값이 52주 신고가 -15% 이내 ④ 그 돌파일 이후 3거래일 이내
+          단봉(|종가-시가|/시가&lt;3%)의 종가에 매수 →
+          매도 조건: ⑤ 매수 이후 종가가 20일 이동평균선(SMA20) 아래로 마감하는 첫 날의 종가에 매도
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="label">총 거래</div>
+            <div class="value" id="rsb-total">-</div>
+            <div class="sub" id="rsb-closed">-</div>
+          </div>
+          <div class="card">
+            <div class="label">승률</div>
+            <div class="value" id="rsb-winrate">-</div>
+            <div class="sub">청산 완료 기준</div>
+          </div>
+          <div class="card">
+            <div class="label">평균 수익률</div>
+            <div class="value" id="rsb-avg-pnl">-</div>
+            <div class="sub">건당</div>
+          </div>
+          <div class="card">
+            <div class="label">누적 수익률</div>
+            <div class="value" id="rsb-total-pnl">-</div>
+            <div class="sub">복리 기준</div>
+          </div>
+          <div class="card">
+            <div class="label">MDD</div>
+            <div class="value" id="rsb-mdd">-</div>
+            <div class="sub">최대 낙폭</div>
+          </div>
+        </div>
+        <div class="table-wrap" id="rsb-table"></div>
+      </div>
+    </div>
+
+    <!-- 기준봉 눌림목 타점 전략 -->
+    <div class="section">
+      <div class="section-header">
+        <h2>📊 기준봉 눌림목 타점 전략</h2>
+        <span style="font-size:12px;color:var(--text-muted);">HM(슈퍼트렌드·일목기준선·VW120·EMA60/120/240 중 최대) 상향 돌파 기준봉 + 눌림목 단봉 매수</span>
+      </div>
+      <div class="section-body">
+        <div class="sec-hint">
+          매수 조건: ① 전일종가&lt;HM이고 금일종가&gt;HM (HM = MAX(슈퍼트렌드(21,3), 일목기준선(26), 120봉 거래량가중평균가, EMA60, EMA120, EMA240))인 기준봉(t) 발생
+          ② 최근 120봉 중 거래대금&gt;1,000억인 봉이 1개 이상 ③ VPower=((종가-시가)/ATR21)×(거래량/MA거래량21) &gt; 1.5 →
+          기준봉 이후 t+1~t+4일 동안 저가가 (기준봉저가+추적중 최고가)/2 아래로 한 번도 떨어지지 않은 상태에서
+          거래량&lt;기준봉거래량 이고 |종가-시가|≤시가×3%인 첫째 날의 종가에 매수 (4일 내 미충족 시 소멸) →
+          매도 조건: 기준선 지지 + RS 추세 전략과 동일 (-5% 손절 / +10% 1차 익절(1/3) 후 USAF 추세추종 전량 매도)
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="label">총 거래</div>
+            <div class="value" id="pb-total">-</div>
+            <div class="sub" id="pb-closed">-</div>
+          </div>
+          <div class="card">
+            <div class="label">승률</div>
+            <div class="value" id="pb-winrate">-</div>
+            <div class="sub">청산 완료 기준</div>
+          </div>
+          <div class="card">
+            <div class="label">평균 수익률</div>
+            <div class="value" id="pb-avg-pnl">-</div>
+            <div class="sub">건당</div>
+          </div>
+          <div class="card">
+            <div class="label">누적 수익률</div>
+            <div class="value" id="pb-total-pnl">-</div>
+            <div class="sub">복리 기준(10슬롯 동시운용)</div>
+          </div>
+          <div class="card">
+            <div class="label">MDD</div>
+            <div class="value" id="pb-mdd">-</div>
+            <div class="sub">최대 낙폭</div>
+          </div>
+        </div>
+        <div class="table-wrap" id="pb-table"></div>
+      </div>
+    </div>
+
+  </div><!-- /tab-trade -->
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- Tab: 기간분석 (E8) -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div id="tab-period" class="tab-panel">
+    <div id="period-body">
+      <div class="placeholder"><div class="icon">📊</div>기간을 선택하고 조회하세요</div>
+    </div>
+  </div><!-- /tab-period -->
+
+</div><!-- /app -->
+
+<!-- Treemap 마우스오버 팝업 -->
+<div id="tm-tooltip" class="tm-tooltip">
+  <div class="tt-title" id="tt-title">-</div>
+  <div class="tt-row"><span class="tt-key" id="tt-score-label">종합점수</span><span class="tt-val" id="tt-score">-</span></div>
+  <div class="tt-row"><span class="tt-key">누적상승율</span><span class="tt-val" id="tt-cumret">-</span></div>
+  <div class="tt-row"><span class="tt-key">거래대금</span><span class="tt-val" id="tt-amount">-</span></div>
+  <div class="tt-row"><span class="tt-key">상승일비율</span><span class="tt-val" id="tt-upratio">-</span></div>
+  <div class="tt-row"><span class="tt-key">등장일수</span><span class="tt-val" id="tt-days">-</span></div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+Chart.defaults.font.family = "'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif";
+Chart.defaults.color = '#7fa8cc';
+const CACHE = new Map();
+
+let allTrades = [];
+let filteredTrades = [];
+let sortCol = 'entry_date';
+let sortAsc = false;
+let selectedTradeId = null;
+let regimes = [];
+let dominantDaysMap = {};  // `${date}|${theme1}` -> {amount_ratio, n_stocks, pct_gap}
+let themeColors = {};
+const PALETTE = ['#3a9fd8','#e8543e','#2ecc71','#9b59b6','#f2b50f','#d44e7a','#6ab04c','#4c6bc4','#16a085','#c0392b','#2980b9','#27ae60','#8e44ad','#f39c12','#e74c3c','#1abc9c','#d35400','#7fa8cc','#e67e22','#2c3e50','#ff7f50','#5d6d7e','#a3cb38','#fd79a8'];
+const FIXED_THEME_COLORS = { '수소': '#3a9fd8', '보안': '#e8543e', '지주사': '#2ecc71', '양자': '#9b59b6', '반도체': '#f2b50f' };
+// PALETTE 앞 5칸이 FIXED_THEME_COLORS 값과 동일해서, 동적 배정 시 인덱스 기반(i % PALETTE.length)으로
+// 고르면 다른 테마가 같은 색을 또 뽑아 고정색 테마와 겹치는 버그가 있었음(예: 지주사·우주항공 둘 다
+// 초록) — FIXED 값을 제외한 풀에서만 동적 배정하도록 분리
+const DYNAMIC_PALETTE = PALETTE.filter(c => !Object.values(FIXED_THEME_COLORS).includes(c));
+let colorIdx = 0;
+// 테마 추이(테마 추이 차트)에서 동시에 표시되는 최대 5개 테마는 항상 서로 뚜렷하게
+// 구분되는 5색을 "선택 순서(슬롯)" 기준으로 우선 배정 — 전체 테마 목록 인덱스 기준으로
+// 배정하면 우연히 비슷한 색 계열(노란/주황 등)이 같이 뽑힐 수 있었음(실측: LNG·초전도체)
+const TREND_SLOT_COLORS = ['#1fb87a', '#3a9fd8', '#e05e30', '#9b6bd6', '#e8b84b'];
+let periodCharts = {};  // Chart 인스턴스 보관
+let stTrades = [];   // 기준선 지지 + RS 추세 전략 트레이드
+let rsbTrades = [];  // RS강세 거래대금 슈퍼트렌드 돌파 전략 트레이드
+let pbTrades = [];   // 기준봉 눌림목 타점 전략 트레이드
+let stSummaryCache = {};
+let rsbSummaryCache = {};
+let pbSummaryCache = {};
+
+function themeColor(theme) {
+  if (!themeColors[theme]) themeColors[theme] = FIXED_THEME_COLORS[theme] || DYNAMIC_PALETTE[colorIdx++ % DYNAMIC_PALETTE.length];
+  return themeColors[theme];
+}
+
+// ── Tab system ────────────────────────────────────────────────────────────────
+let activeTab = 'trade';
+
+function switchTab(name, btn) {
+  activeTab = name;
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+
+  if (name === 'period') {
+    const start = document.getElementById('start-date').value;
+    const end   = document.getElementById('end-date').value;
+    if (start && end && loadedPeriodKey !== start + '|' + end) loadPeriod(start, end);
+  }
+}
+
+// ── Date helpers ──────────────────────────────────────────────────────────────
+function today() { return new Date().toISOString().slice(0,10); }
+function monthsAgo(n) {
+  const d = new Date(); d.setMonth(d.getMonth() - n); return d.toISOString().slice(0,10);
+}
+function daysAgo(n) {
+  const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0,10);
+}
+function setShortcut(months) {
+  document.getElementById('start-date').value = months === 0 ? '2020-01-01' : monthsAgo(months);
+  document.getElementById('end-date').value = today();
+  doQuery();
+}
+function setShortcutDays(days) {
+  document.getElementById('start-date').value = daysAgo(days);
+  document.getElementById('end-date').value = today();
+  doQuery();
+}
+function setYear(year) {
+  if (!year) return;
+  const t = today();
+  const yearEnd = `${year}-12-31`;
+  document.getElementById('start-date').value = `${year}-01-01`;
+  document.getElementById('end-date').value = yearEnd > t ? t : yearEnd;
+  doQuery();
+}
+// 시작일/종료일 중 한쪽만 설정된 경우 반대쪽을 자동 보완 후 조회
+function onStartDateChange() {
+  const endEl = document.getElementById('end-date');
+  if (!endEl.value) endEl.value = today();
+  doQuery();
+}
+function onEndDateChange() {
+  const startEl = document.getElementById('start-date');
+  if (!startEl.value) startEl.value = monthsAgo(6);
+  doQuery();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+async function init() {
+  document.getElementById('start-date').value = monthsAgo(6);
+  document.getElementById('end-date').value = today();
+
+  try {
+    const meta = await apiFetch('/meta/dataset');
+    const d = meta.data;
+    document.getElementById('meta-max-date').textContent = d.max_date || '-';
+    document.getElementById('meta-version').textContent = d.dataset_version || '-';
+    const upd = d.last_updated_at ? d.last_updated_at.slice(0,19).replace('T',' ') : '-';
+    document.getElementById('meta-updated').textContent = upd;
+    if (d.max_date) {
+      const diff = (new Date(today()) - new Date(d.max_date)) / 86400000;
+      if (diff <= 7) document.getElementById('meta-max-date').classList.add('fresh');
+    }
+  } catch(e) { console.warn('meta fetch failed', e); }
+
+  doQuery();
+}
+
+// ── API fetch with cache ──────────────────────────────────────────────────────
+async function apiFetch(path) {
+  if (CACHE.has(path)) return CACHE.get(path);
+  const r = await fetch(API + path);
+  if (!r.ok) throw new Error(`${r.status} ${r.statusText}: ${path}`);
+  const data = await r.json();
+  CACHE.set(path, data);
+  return data;
+}
+
+// ── Main query ────────────────────────────────────────────────────────────────
+async function doQuery() {
+  const start = document.getElementById('start-date').value;
+  const end   = document.getElementById('end-date').value;
+  if (!start || !end) return;
+
+  showError('');
+  document.getElementById('query-status').textContent = '조회 중...';
+
+  // 기간분석은 트레이드 API와 독립적으로 항상 갱신 (한쪽 실패가 다른 쪽을 막지 않음)
+  if (activeTab === 'period') loadPeriod(start, end);
+  else loadedPeriodKey = null;  // 다음 탭 진입 시 강제 재로드
+
+  try {
+    const [regR, trR, stR, rsbR, pbR, domR] = await Promise.all([
+      apiFetch(`/leaders/regimes?start=${start}&end=${end}&limit=500`),
+      apiFetch(`/trades?start=${start}&end=${end}&limit=1000`),
+      apiFetch(`/api/period/supertrend-trades?start=${start}&end=${end}`),
+      apiFetch(`/api/period/rs-breakout-trades?start=${start}&end=${end}`),
+      apiFetch(`/api/period/pullback-trades?start=${start}&end=${end}`),
+      apiFetch(`/api/period/theme-rank-days?start=${start}&end=${end}`).catch(() => null),
+    ]);
+
+    regimes = regR.data || [];
+    allTrades = trR.data || [];
+    const summary = trR.summary || {};
+
+    dominantDaysMap = {};
+    for (const d of (domR && domR.days) || []) {
+      dominantDaysMap[`${d.date}|${d.theme1}`] = d;
+    }
+
+    renderSummary(summary, allTrades.length);
+    renderTimeline(regimes, start, end);
+    renderSuperTrend(stR.summary || {}, stR.trades || []);
+    renderRsBreakout(rsbR.summary || {}, rsbR.trades || []);
+    renderPullback(pbR.summary || {}, pbR.trades || []);
+    applyFilter();
+    document.getElementById('query-status').textContent = `${allTrades.length}건 로드`;
+
+  } catch(e) {
+    showError('API 오류: ' + e.message + ' (FastAPI 서버가 실행 중인지 확인하세요)');
+    document.getElementById('query-status').textContent = '오류';
+  }
+}
+
+// ── 슈퍼트렌드 주도테마 돌파 전략 ────────────────────────────────────────────────
+function renderSuperTrend(s, trades) {
+  setText('st-total', s.total_trades ?? 0);
+  setText('st-closed', `청산 ${s.closed_trades ?? 0}건`);
+  const wr = s.win_rate_pct;
+  const wrEl = document.getElementById('st-winrate');
+  wrEl.textContent = wr != null ? wr.toFixed(1) + '%' : '-';
+  wrEl.className = 'value ' + (wr > 50 ? 'pos' : wr > 40 ? 'neu' : 'neg');
+  const ap = s.avg_pnl_pct;
+  const apEl = document.getElementById('st-avg-pnl');
+  apEl.textContent = ap != null ? (ap > 0 ? '+' : '') + ap.toFixed(2) + '%' : '-';
+  apEl.className = 'value ' + pnlClass(ap);
+  const tp = s.total_pnl_pct;
+  const tpEl = document.getElementById('st-total-pnl');
+  tpEl.textContent = tp != null ? (tp > 0 ? '+' : '') + tp.toFixed(1) + '%' : '-';
+  tpEl.className = 'value ' + pnlClass(tp);
+  const md = s.max_drawdown_pct;
+  const mdEl = document.getElementById('st-mdd');
+  mdEl.textContent = md != null ? md.toFixed(2) + '%' : '-';
+  mdEl.className = 'value ' + (md > -10 ? 'pos' : md > -25 ? 'neu' : 'neg');
+
+  stSummaryCache = s;
+  stTrades = applySort('st-table', trades);
+  const theadHtml = `<tr>
+      ${thSort('st-table', 'name', '종목')}
+      ${thSort('st-table', 'signal_date', '신호일')}
+      ${thSort('st-table', 'entry_date', '진입일(중심선 되돌림)')}
+      ${thSort('st-table', 'entry_price', '진입가')}
+      ${thSort('st-table', 'exit_date', '청산일')}
+      ${thSort('st-table', 'exit_price', '청산가')}
+      ${thSort('st-table', 'pnl_pct', '수익률')}
+      ${thSort('st-table', 'hold_days', '보유일')}
+      ${thSort('st-table', 'exit_reason', '청산 사유')}
+      ${thSort('st-table', 'rs_score', 'RS점수')}
+    </tr>`;
+  const rowFn = (t, i) => `
+    <tr onclick="selectExternalTrade('st', ${i})">
+      <td>${t.name} <span style="color:var(--text-muted)">${t.code}</span></td>
+      <td>${t.signal_date}</td>
+      <td>${t.entry_date}</td>
+      <td>${t.entry_price?.toLocaleString() ?? '-'}</td>
+      <td>${t.exit_date ?? '-'}</td>
+      <td>${t.exit_price?.toLocaleString() ?? '-'}</td>
+      <td class="${pnlClass(t.pnl_pct)}">${t.pnl_pct != null ? (t.pnl_pct > 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%' : '-'}</td>
+      <td>${t.hold_days ?? '-'}</td>
+      <td>${t.exit_reason ?? '-'}</td>
+      <td>${t.rs_score ?? '-'}</td>
+    </tr>`;
+  renderExpandableTable('st-table', stTrades, theadHtml, rowFn,
+    '조건에 맞는 트레이드가 없습니다 (슈퍼트렌드·볼린저밴드 돌파 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
+  tableRenderers['st-table'] = () => renderSuperTrend(stSummaryCache, stTrades);
+}
+
+// ── RS강세 거래대금 슈퍼트렌드 돌파 전략 ──────────────────────────────────────────
+function renderRsBreakout(s, trades) {
+  setText('rsb-total', s.total_trades ?? 0);
+  setText('rsb-closed', `청산 ${s.closed_trades ?? 0}건`);
+  const wr = s.win_rate_pct;
+  const wrEl = document.getElementById('rsb-winrate');
+  wrEl.textContent = wr != null ? wr.toFixed(1) + '%' : '-';
+  wrEl.className = 'value ' + (wr > 50 ? 'pos' : wr > 40 ? 'neu' : 'neg');
+  const ap = s.avg_pnl_pct;
+  const apEl = document.getElementById('rsb-avg-pnl');
+  apEl.textContent = ap != null ? (ap > 0 ? '+' : '') + ap.toFixed(2) + '%' : '-';
+  apEl.className = 'value ' + pnlClass(ap);
+  const tp = s.total_pnl_pct;
+  const tpEl = document.getElementById('rsb-total-pnl');
+  tpEl.textContent = tp != null ? (tp > 0 ? '+' : '') + tp.toFixed(1) + '%' : '-';
+  tpEl.className = 'value ' + pnlClass(tp);
+  const md = s.max_drawdown_pct;
+  const mdEl = document.getElementById('rsb-mdd');
+  mdEl.textContent = md != null ? md.toFixed(2) + '%' : '-';
+  mdEl.className = 'value ' + (md > -10 ? 'pos' : md > -25 ? 'neu' : 'neg');
+
+  rsbSummaryCache = s;
+  rsbTrades = applySort('rsb-table', trades);
+  const theadHtml = `<tr>
+      ${thSort('rsb-table', 'qualify_date', 'RS≥85일')}${thSort('rsb-table', 'name', '종목')}${thSort('rsb-table', 'breakout_date', '돌파일')}${thSort('rsb-table', 'entry_date', '진입일(단봉)')}${thSort('rsb-table', 'entry_price', '진입가')}
+      ${thSort('rsb-table', 'exit_date', '청산일')}${thSort('rsb-table', 'exit_price', '청산가')}${thSort('rsb-table', 'pnl_pct', '수익률')}${thSort('rsb-table', 'hold_days', '보유일')}${thSort('rsb-table', 'exit_reason', '청산 사유')}${thSort('rsb-table', 'rs_score', 'RS점수')}
+    </tr>`;
+  const rowFn = (t, i) => `
+      <tr onclick="selectExternalTrade('rsb', ${i})">
+        <td>${t.qualify_date}</td>
+        <td>${t.name} <span style="color:var(--text-muted)">${t.code}</span></td>
+        <td>${t.breakout_date}</td>
+        <td>${t.entry_date}</td>
+        <td>${t.entry_price?.toLocaleString() ?? '-'}</td>
+        <td>${t.exit_date ?? '-'}</td>
+        <td>${t.exit_price?.toLocaleString() ?? '-'}</td>
+        <td class="${pnlClass(t.pnl_pct)}">${t.pnl_pct != null ? (t.pnl_pct > 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%' : '-'}</td>
+        <td>${t.hold_days ?? '-'}</td>
+        <td>${t.exit_reason ?? '-'}</td>
+        <td>${t.rs_score ?? '-'}</td>
+      </tr>`;
+  renderExpandableTable('rsb-table', rsbTrades, theadHtml, rowFn,
+    '조건에 맞는 트레이드가 없습니다 (RS점수≥85 + 거래대금 1천억 + 슈퍼트렌드 돌파 + 단봉 매수 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
+  tableRenderers['rsb-table'] = () => renderRsBreakout(rsbSummaryCache, rsbTrades);
+}
+
+// ── 기준봉 눌림목 타점 전략 ────────────────────────────────────────────────────
+function renderPullback(s, trades) {
+  setText('pb-total', s.total_trades ?? 0);
+  setText('pb-closed', `청산 ${s.closed_trades ?? 0}건`);
+  const wr = s.win_rate_pct;
+  const wrEl = document.getElementById('pb-winrate');
+  wrEl.textContent = wr != null ? wr.toFixed(1) + '%' : '-';
+  wrEl.className = 'value ' + (wr > 50 ? 'pos' : wr > 40 ? 'neu' : 'neg');
+  const ap = s.avg_pnl_pct;
+  const apEl = document.getElementById('pb-avg-pnl');
+  apEl.textContent = ap != null ? (ap > 0 ? '+' : '') + ap.toFixed(2) + '%' : '-';
+  apEl.className = 'value ' + pnlClass(ap);
+  const tp = s.total_pnl_pct;
+  const tpEl = document.getElementById('pb-total-pnl');
+  tpEl.textContent = tp != null ? (tp > 0 ? '+' : '') + tp.toFixed(1) + '%' : '-';
+  tpEl.className = 'value ' + pnlClass(tp);
+  const md = s.max_drawdown_pct;
+  const mdEl = document.getElementById('pb-mdd');
+  mdEl.textContent = md != null ? md.toFixed(2) + '%' : '-';
+  mdEl.className = 'value ' + (md > -10 ? 'pos' : md > -25 ? 'neu' : 'neg');
+
+  pbSummaryCache = s;
+  pbTrades = applySort('pb-table', trades);
+  const theadHtml = `<tr>
+      ${thSort('pb-table', 'name', '종목')}${thSort('pb-table', 'breakout_date', '기준봉일')}${thSort('pb-table', 'entry_date', '진입일(눌림목)')}${thSort('pb-table', 'entry_price', '진입가')}
+      ${thSort('pb-table', 'exit_date', '청산일')}${thSort('pb-table', 'exit_price', '청산가')}${thSort('pb-table', 'pnl_pct', '수익률')}${thSort('pb-table', 'hold_days', '보유일')}${thSort('pb-table', 'exit_reason', '청산 사유')}
+    </tr>`;
+  const rowFn = (t, i) => `
+      <tr onclick="selectExternalTrade('pb', ${i})">
+        <td>${t.name} <span style="color:var(--text-muted)">${t.code}</span></td>
+        <td>${t.breakout_date}</td>
+        <td>${t.entry_date}</td>
+        <td>${t.entry_price?.toLocaleString() ?? '-'}</td>
+        <td>${t.exit_date ?? '-'}</td>
+        <td>${t.exit_price?.toLocaleString() ?? '-'}</td>
+        <td class="${pnlClass(t.pnl_pct)}">${t.pnl_pct != null ? (t.pnl_pct > 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%' : '-'}</td>
+        <td>${t.hold_days ?? '-'}</td>
+        <td>${t.exit_reason ?? '-'}</td>
+      </tr>`;
+  renderExpandableTable('pb-table', pbTrades, theadHtml, rowFn,
+    '조건에 맞는 트레이드가 없습니다 (기준봉 HM 돌파 + 거래대금 조건 + 눌림목 단봉 매수 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
+  tableRenderers['pb-table'] = () => renderPullback(pbSummaryCache, pbTrades);
+}
+
+function showError(msg) {
+  const el = document.getElementById('error-msg');
+  el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+// ── Summary cards ─────────────────────────────────────────────────────────────
+function renderSummary(s, total) {
+  setText('c-total', total);
+  setText('c-closed', `청산 ${s.closed_trades ?? '-'}건`);
+  const wr = s.win_rate_pct;
+  const wrEl = document.getElementById('c-winrate');
+  wrEl.textContent = wr != null ? wr.toFixed(1) + '%' : '-';
+  wrEl.className = 'value ' + (wr > 50 ? 'pos' : wr > 40 ? 'neu' : 'neg');
+  const ap = s.avg_net_pnl_pct;
+  const apEl = document.getElementById('c-avg-pnl');
+  apEl.textContent = ap != null ? (ap > 0 ? '+' : '') + ap.toFixed(2) + '%' : '-';
+  apEl.className = 'value ' + pnlClass(ap);
+  const tp = s.total_net_pnl_pct;
+  const tpEl = document.getElementById('c-total-pnl');
+  tpEl.textContent = tp != null ? (tp > 0 ? '+' : '') + tp.toFixed(1) + '%' : '-';
+  tpEl.className = 'value ' + pnlClass(tp);
+  const md = s.max_drawdown_pct;
+  const mdEl = document.getElementById('c-mdd');
+  mdEl.textContent = md != null ? md.toFixed(2) + '%' : '-';
+  mdEl.className = 'value ' + (md > -10 ? 'pos' : md > -25 ? 'neu' : 'neg');
+}
+
+function setText(id, v) { document.getElementById(id).textContent = v ?? '-'; }
+function pnlClass(v) { return v == null ? '' : v > 0 ? 'pos' : v < 0 ? 'neg' : 'neu'; }
+
+// ── 헤더 클릭 정렬 (오름차순/내림차순 토글) ─────────────────────────────────────
+// 기본 정렬: 트레이드 테이블은 진입일 내림차순, 기간분석 테이블은 날짜 내림차순
+const tableSortState = {
+  'st-table': { col: 'entry_date', asc: false },
+  'rsb-table': { col: 'entry_date', asc: false },
+  'pb-table': { col: 'entry_date', asc: false },
+  'dominant-top-table': { col: 'date', asc: false },
+  'events-table': { col: 'date', asc: false },
+  'leaders-table': { col: 'first_signal_date', asc: false },
+};
+const tableRenderers = {};
+
+function genericSort(items, col, asc) {
+  return [...items].sort((a, b) => {
+    let av = a[col], bv = b[col];
+    if (av == null) return 1; if (bv == null) return -1;
+    if (typeof av === 'string') return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return asc ? av - bv : bv - av;
+  });
+}
+
+function applySort(tableId, items) {
+  const st = tableSortState[tableId];
+  if (!st || !st.col) return items;
+  return genericSort(items, st.col, st.asc);
+}
+
+function thSort(tableId, col, label) {
+  const st = tableSortState[tableId];
+  const active = st && st.col === col;
+  const icon = active ? (st.asc ? '↑' : '↓') : '↕';
+  return `<th class="${active ? 'sorted' : ''}" onclick="onSortClick('${tableId}','${col}')">${label} <span class="sort-icon">${icon}</span></th>`;
+}
+
+function onSortClick(tableId, col) {
+  const st = tableSortState[tableId] || { col: null, asc: true };
+  if (st.col === col) st.asc = !st.asc; else { st.col = col; st.asc = true; }
+  tableSortState[tableId] = st;
+  if (tableRenderers[tableId]) tableRenderers[tableId]();
+}
+
+// ── 더보기 지원 테이블 (최대 limit건만 먼저 표시, 더보기 클릭 시 전체 표시) ──────────
+function renderExpandableTable(containerId, items, theadHtml, rowFn, emptyMsg, limit = 20) {
+  const el = document.getElementById(containerId);
+  if (!items.length) { el.innerHTML = `<div class="empty">${emptyMsg}</div>`; return; }
+
+  const renderRows = n => items.slice(0, n).map(rowFn).join('');
+  el.innerHTML = `<table>
+    <thead>${theadHtml}</thead>
+    <tbody id="${containerId}-tbody">${renderRows(Math.min(limit, items.length))}</tbody>
+  </table>
+  ${items.length > limit ? `<div style="text-align:center;margin-top:8px">
+    <button class="btn btn-ghost" id="${containerId}-more">더보기 (${items.length - limit}건 더)</button>
+  </div>` : ''}`;
+
+  const moreBtn = document.getElementById(`${containerId}-more`);
+  if (moreBtn) {
+    moreBtn.onclick = () => {
+      document.getElementById(`${containerId}-tbody`).innerHTML = renderRows(items.length);
+      moreBtn.remove();
+    };
+  }
+}
+
+// ── Timeline ──────────────────────────────────────────────────────────────────
+function renderTimeline(regs, start, end) {
+  document.getElementById('regime-count').textContent = `${regs.length}개 레짐`;
+  const container = document.getElementById('timeline-container');
+  if (!regs.length) {
+    container.innerHTML = '<div class="empty">해당 기간에 레짐 데이터가 없습니다</div>';
+    return;
+  }
+  const t0 = new Date(start).getTime();
+  const t1 = new Date(end).getTime();
+  const span = t1 - t0 || 1;
+  let bars = '';
+  const legendMap = {};
+  for (const r of regs) {
+    const rs = Math.max(new Date(r.start_date).getTime(), t0);
+    const re = Math.min(new Date(r.end_date).getTime(), t1);
+    if (rs > re) continue;
+    const left  = ((rs - t0) / span * 100).toFixed(2);
+    const width = Math.max(((re - rs) / span * 100), 0.3).toFixed(2);
+    const color = themeColor(r.theme1);
+    legendMap[r.theme1] = color;
+    const label = width > 3 ? r.theme1 : '';
+    const tip = `${r.theme1} | ${r.start_date}~${r.end_date} (${r.duration_days}일) | 리더: ${r.leader_name||'-'}`;
+    bars += `<div class="tl-bar" style="left:${left}%;width:${width}%;background:${color}" title="${tip}" onclick="filterByRegime('${r.theme1}')">${label}</div>`;
+  }
+  const axisLabels = [start, midDate(start,end), end].map(d => `<span>${d.slice(0,7)}</span>`).join('');
+  let legend = '';
+  for (const [t, c] of Object.entries(legendMap)) {
+    legend += `<div class="tl-legend-item"><div class="tl-legend-dot" style="background:${c}"></div>${t}</div>`;
+  }
+  container.innerHTML = `<div id="timeline-wrap"><div class="tl-track">${bars}</div><div class="tl-axis">${axisLabels}</div><div class="tl-legend">${legend}</div></div>`;
+}
+
+function midDate(a, b) {
+  return new Date((new Date(a).getTime() + new Date(b).getTime()) / 2).toISOString().slice(0,10);
+}
+function filterByRegime(theme) {
+  document.getElementById('filter-text').value = theme;
+  applyFilter();
+}
+
+// ── Trade table ───────────────────────────────────────────────────────────────
+function applyFilter() {
+  const text   = document.getElementById('filter-text').value.toLowerCase();
+  const reason = document.getElementById('filter-reason').value;
+  const pnl    = document.getElementById('filter-pnl').value;
+  filteredTrades = allTrades.filter(t => {
+    if (text && !(t.name||'').toLowerCase().includes(text) &&
+                !(t.theme1||'').toLowerCase().includes(text) &&
+                !(t.code||'').includes(text)) return false;
+    if (reason && t.exit_reason !== reason) return false;
+    if (pnl === 'win'  && !(t.net_pnl_pct > 0))  return false;
+    if (pnl === 'loss' && !(t.net_pnl_pct < 0)) return false;
+    return true;
+  });
+  sortAndRender();
+  document.getElementById('filter-count').textContent =
+    filteredTrades.length !== allTrades.length
+      ? `${filteredTrades.length} / ${allTrades.length}건`
+      : `${allTrades.length}건`;
+}
+
+function sortTable(col) {
+  if (sortCol === col) sortAsc = !sortAsc;
+  else { sortCol = col; sortAsc = true; }
+  document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+  sortAndRender();
+}
+
+function sortAndRender() {
+  const col = sortCol, asc = sortAsc;
+  const sorted = [...filteredTrades].sort((a, b) => {
+    let av = a[col], bv = b[col];
+    if (av == null) return 1; if (bv == null) return -1;
+    if (typeof av === 'string') return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+    return asc ? av - bv : bv - av;
+  });
+  renderTradeTable(sorted);
+  // 새 조회 결과에 현재 선택된 trade_id가 없으면(기간 변경으로 사라짐 등) 첫 행으로
+  // 갱신하거나 패널을 비움 — 이전에는 selectedTradeId가 non-null로 남아있으면 갱신
+  // 자체를 스킵해, 예를 들어 2024년처럼 결과가 비거나 달라져도 근거 패널이 직전(예:
+  // 2026년) 트레이드 내용을 그대로 보여주는 버그가 있었음 (트레이드 로그 표 자체는
+  // 정상 갱신되지만, 그 옆/아래 "트레이드 상세" 패널만 stale하게 남아 마치 트레이드
+  // 로그가 잘못된 기간을 보여주는 것처럼 보였음)
+  if (!sorted.length) {
+    selectedTradeId = null;
+    document.getElementById('explain-body').innerHTML = '<div class="empty">조건에 맞는 트레이드가 없습니다</div>';
+  } else if (!sorted.some(t => t.trade_id === selectedTradeId)) {
+    selectTrade(sorted[0].trade_id);
+  }
+}
+
+function tradeRowHtml(t) {
+  return `
+    <tr class="${t.trade_id === selectedTradeId ? 'selected' : ''}" onclick="selectTrade(${t.trade_id})">
+      <td>${t.signal_date}</td>
+      <td>${t.entry_date}</td>
+      <td><strong>${t.name||'-'}</strong><br><small style="color:var(--text-muted)">${t.code}</small></td>
+      <td><span class="badge badge-blue">${t.theme1||'-'}</span></td>
+      <td>${fmt(t.entry_price)}</td>
+      <td>${t.exit_date||'미청산'}</td>
+      <td>${fmt(t.exit_price)}</td>
+      <td class="${pnlClass(t.net_pnl_pct)}">${pnlStr(t.net_pnl_pct)}</td>
+      <td>${t.hold_days != null ? t.hold_days + '일' : '-'}</td>
+      <td>${reasonBadge(t.exit_reason)}</td>
+    </tr>`;
+}
+
+function renderTradeTable(trades, limit = 10) {
+  const tbody = document.getElementById('trade-tbody');
+  const moreWrap = document.getElementById('trade-table-more');
+  if (!trades.length) {
+    tbody.innerHTML = '<tr><td colspan="10" class="empty">조건에 맞는 트레이드가 없습니다</td></tr>';
+    moreWrap.innerHTML = '';
+    return;
+  }
+  const renderRows = n => trades.slice(0, n).map(tradeRowHtml).join('');
+  tbody.innerHTML = renderRows(Math.min(limit, trades.length));
+  moreWrap.innerHTML = trades.length > limit
+    ? `<button class="btn btn-ghost" id="trade-table-more-btn">더보기 (${trades.length - limit}건 더)</button>`
+    : '';
+  const moreBtn = document.getElementById('trade-table-more-btn');
+  if (moreBtn) {
+    moreBtn.onclick = () => {
+      tbody.innerHTML = renderRows(trades.length);
+      moreWrap.innerHTML = '';
+    };
+  }
+}
+
+function fmt(v) { return v != null ? v.toLocaleString() + '원' : '-'; }
+function pnlStr(v) { return v != null ? (v > 0 ? '+' : '') + v.toFixed(2) + '%' : '-'; }
+function reasonBadge(r) {
+  const map = { regime_end:['badge-blue','레짐 종료'], stop_loss:['badge-red','손절'], take_profit:['badge-green','익절'], open:['badge-yellow','미체결'] };
+  const [cls, label] = map[r] || ['badge-yellow', r||'-'];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+// ── Explainability ────────────────────────────────────────────────────────────
+function selectTrade(id) {
+  selectedTradeId = id;
+  const t = allTrades.find(x => x.trade_id === id);
+  if (!t) return;
+  sortAndRender();
+  const regime = regimes.find(r => r.theme1 === t.theme1 && r.start_date <= t.signal_date && r.end_date >= t.signal_date);
+  const pnlStyle = pnlClass(t.net_pnl_pct);
+  const exitKo = { regime_end:'주도 테마 교체', stop_loss:'손절 기준 도달', take_profit:'익절 기준 도달', open:'포지션 유지중' }[t.exit_reason] || t.exit_reason;
+  const dd = dominantDaysMap[`${t.signal_date}|${t.theme1}`];
+  const amountRatioText = dd && dd.amount_ratio != null ? ` (2위 대비 ${dd.amount_ratio.toFixed(2)}배)` : '';
+  const steps = [
+    `신호일(${t.signal_date}) 기준 <strong>'${t.theme1}'</strong> 테마 거래대금 전체 1위${amountRatioText}`,
+    ...(dd ? [`신호일 기준 <strong>'${t.theme1}'</strong> 테마에 <strong>${dd.n_stocks}개 종목</strong> 포함, 평균 상승률은 2위 테마 대비 <strong class="${dd.pct_gap >= 0 ? 'pos' : 'neg'}">${dd.pct_gap >= 0 ? '+' : ''}${dd.pct_gap.toFixed(2)}%p</strong> ${dd.pct_gap >= 0 ? '높음' : '낮음'}`] : []),
+    `테마 내 거래대금 최상위 종목 <strong>${t.name}(${t.code})</strong> 선정 (t+1일 체결)`,
+    `진입일(${t.entry_date}) ${fmt(t.entry_price)} 매수 체결`,
+    t.exit_date ? `청산일(${t.exit_date}) ${fmt(t.exit_price)} 매도 — <strong>${exitKo}</strong>` : '미청산 포지션',
+    t.net_pnl_pct != null ? `순 수익률 <strong class="${pnlStyle}">${pnlStr(t.net_pnl_pct)}</strong> (보유 ${t.hold_days||'?'}일, 수수료 ${t.fee_pct||0}%)` : '수익률 계산 불가',
+  ];
+  document.getElementById('explain-body').innerHTML = `
+    <div class="explain-grid">
+      <div class="explain-block"><h3>트레이드 상세</h3>
+        ${row('종목',`${t.name} (${t.code})`)}${row('테마',t.theme1||'-')}
+        ${row('신호일',t.signal_date)}${row('진입일',t.entry_date)}${row('진입가',fmt(t.entry_price))}
+        ${row('청산일',t.exit_date||'미청산')}${row('청산가',fmt(t.exit_price))}
+        ${row('청산 사유',exitKo)}${row('보유일',t.hold_days!=null?t.hold_days+'일':'-')}
+      </div>
+      <div class="explain-block"><h3>성과</h3>
+        ${row('수익률(세전)',pnlStr(t.pnl_pct))}${row('수수료',(t.fee_pct||0)+'%')}
+        ${row('순 수익률',`<span class="${pnlStyle}">${pnlStr(t.net_pnl_pct)}</span>`)}
+        ${regime?row('레짐 지속일',regime.duration_days+'거래일'):''}
+        ${regime?row('레짐 기간',`${regime.start_date} ~ ${regime.end_date}`):''}
+        ${regime?row('평균 테마 거래대금',fmtAmount(regime.avg_theme_amount)):''}
+      </div>
+      <div class="explain-block"><h3>매매 근거</h3>
+        <div class="rationale-text">${steps.map((s,i)=>`<div class="step"><div class="step-num">${i+1}</div><div>${s}</div></div>`).join('')}</div>
+      </div>
+    </div>
+    <div class="explain-chart chart-box">
+      <h3>📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
+      <div class="chart-container" style="height:300px"><canvas id="ch-explain-price"></canvas></div>
+      <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-explain-volume"></canvas></div>
+    </div>`;
+  renderExplainChart(t);
+}
+
+// 기준선 지지 + RS 추세 전략 / RS강세 거래대금 슈퍼트렌드 돌파 전략 / 기준봉 눌림목 타점 전략 트레이드 선택
+const EXTERNAL_STRATEGY_LABEL = { st: '기준선 지지 + RS 추세 전략', rsb: 'RS강세 거래대금 슈퍼트렌드 돌파 전략', pb: '기준봉 눌림목 타점 전략' };
+function selectExternalTrade(kind, idx) {
+  const t = (kind === 'st' ? stTrades : kind === 'rsb' ? rsbTrades : pbTrades)[idx];
+  if (!t) return;
+  selectedTradeId = null;
+  const exitKo = { regime_end:'주도 테마 교체', stop_loss:'손절 기준 도달', take_profit:'익절 기준 도달', open:'포지션 유지중' }[t.exit_reason] || (t.exit_reason || '-');
+  document.getElementById('explain-body').innerHTML = `
+    <div class="explain-grid">
+      <div class="explain-block"><h3>트레이드 상세</h3>
+        ${row('종목',`${t.name} (${t.code})`)}
+        ${t.qualify_date ? row('RS≥85일', t.qualify_date) : ''}
+        ${t.breakout_date ? row('돌파일', t.breakout_date) : ''}
+        ${t.signal_date ? row('신호일', t.signal_date) : ''}
+        ${row('진입일',t.entry_date)}${row('진입가',fmt(t.entry_price))}
+        ${row('청산일',t.exit_date||'미청산')}${row('청산가',fmt(t.exit_price))}
+        ${row('청산 사유',exitKo)}${row('보유일',t.hold_days!=null?t.hold_days+'일':'-')}
+      </div>
+      <div class="explain-block"><h3>성과</h3>
+        ${row('수익률',`<span class="${pnlClass(t.pnl_pct)}">${pnlStr(t.pnl_pct)}</span>`)}
+      </div>
+      <div class="explain-block"><h3>전략</h3>
+        <div class="rationale-text">${EXTERNAL_STRATEGY_LABEL[kind]}</div>
+      </div>
+    </div>
+    <div class="explain-chart chart-box">
+      <h3>📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
+      <div class="chart-container" style="height:300px"><canvas id="ch-explain-price"></canvas></div>
+      <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-explain-volume"></canvas></div>
+    </div>`;
+  renderExplainChart(t);
+}
+
+// 기간분석 탭 — 압도적 테마 종목 / 강세주도 이벤트 / 강세 주도종목 클릭 시 차트 표시
+let periodStockSelected = false;
+function selectPeriodStock(code, name, date, isDefault = false) {
+  if (!code || !date) return;
+  if (!isDefault) periodStockSelected = true;
+  const title = document.getElementById('period-stock-chart-title');
+  if (title) title.innerHTML = `📈 ${name}(${code}) 차트 <small style="color:var(--text-muted);font-weight:400">(${date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small>`;
+  const box = document.getElementById('period-stock-chart');
+  if (box && !document.getElementById('ch-period-price')) {
+    box.querySelectorAll('.empty').forEach(el => el.remove());
+    box.insertAdjacentHTML('beforeend', `
+      <div class="chart-container" style="height:300px"><canvas id="ch-period-price"></canvas></div>
+      <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-period-volume"></canvas></div>`);
+  }
+  renderExplainChart({ code, name, entry_date: date }, 'ch-period-price', 'ch-period-volume', 'period');
+}
+
+const MA_PERIODS = [5, 20, 60, 120, 240];
+const MA_COLORS = { 5: '#e05e30', 20: '#e8b84b', 60: '#6ab04c', 120: '#3a9fd8', 240: '#9b6bd6' };
+
+function addDaysStr(dateStr, days) {
+  const d = new Date(dateStr + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+function movingAverage(values, period) {
+  return values.map((_, i) => {
+    if (i < period - 1) return null;
+    const slice = values.slice(i - period + 1, i + 1);
+    return slice.reduce((a, b) => a + b, 0) / period;
+  });
+}
+
+// 캔들스틱은 외부 플러그인 없이 bar 차트 위에 직접 그린다 (OHLC 박스+꼬리)
+Chart.register({
+  id: 'candleRenderer',
+  afterDatasetsDraw(chart) {
+    const ds = chart.data.datasets[0];
+    if (!ds || !ds.ohlc) return;
+    const meta = chart.getDatasetMeta(0);
+    const yScale = chart.scales.y;
+    const ctx = chart.ctx;
+    meta.data.forEach((el, i) => {
+      const bar = ds.ohlc[i];
+      if (!bar || el.x == null) return;
+      const x = el.x;
+      const w = Math.max(2, (el.width || 4));
+      const yO = yScale.getPixelForValue(bar.o);
+      const yH = yScale.getPixelForValue(bar.h);
+      const yL = yScale.getPixelForValue(bar.l);
+      const yC = yScale.getPixelForValue(bar.c);
+      const color = bar.c >= bar.o ? '#e05e3a' : '#3a9fd8';
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(x, yH);
+      ctx.lineTo(x, yL);
+      ctx.stroke();
+      const bodyTop = Math.min(yO, yC);
+      const bodyH = Math.max(1, Math.abs(yC - yO));
+      ctx.fillRect(x - w / 2, bodyTop, w, bodyH);
+      ctx.restore();
+    });
+  },
+});
+
+async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'ch-explain-volume', keyPrefix = 'explain') {
+  const priceCanvas = document.getElementById(priceId);
+  const volumeCanvas = document.getElementById(volumeId);
+  if (!priceCanvas || !volumeCanvas) return;
+  try {
+    // 진입일 이후 20봉을 포함하려면 entry_date 이후 날짜까지 조회해야 하므로
+    // end를 entry_date+30일(영업일 20개 확보용 여유)로 잡고 entry_date의 위치를 직접 찾는다.
+    // MA240까지 정확히 계산하려면 표시 구간(이전 100봉) 앞에 240봉 버퍼가 필요 → 총 360봉 조회
+    const fetchEnd = addDaysStr(t.entry_date, 30);
+    const res = await fetch(`${API}/api/stocks/${t.code}/ohlcv?end=${fetchEnd}&bars=360`);
+    if (!res.ok) throw new Error('ohlcv fetch failed');
+    const json = await res.json();
+    const allBars = json.data;
+    // 거래정지 등으로 OHLC가 0으로 기록된 날은 종가로 평탄화 (y축/캔들 왜곡 방지)
+    allBars.forEach(b => {
+      if (b.open === 0 && b.high === 0 && b.low === 0) {
+        b.open = b.high = b.low = b.close;
+      }
+    });
+    const closes = allBars.map(b => b.close);
+    const maSeries = {};
+    MA_PERIODS.forEach(p => { maSeries[p] = movingAverage(closes, p); });
+
+    // 진입일 기준 이전 100봉 + 이후 20봉(총 최대 120봉). 데이터가 부족하면 가능한 만큼만 표시
+    let entryAllIdx = allBars.findIndex(b => b.date === t.entry_date);
+    if (entryAllIdx === -1) entryAllIdx = allBars.length - 1;
+    const offset = Math.max(0, entryAllIdx - 99);
+    const bars = allBars.slice(offset, entryAllIdx + 21);
+    const entryIdx = entryAllIdx - offset;
+    const labels = bars.map(b => b.date);
+
+    const ohlc = bars.map(b => ({ o: b.open, h: b.high, l: b.low, c: b.close }));
+
+    // y축 범위: 캔들 고가/저가 + MA 값을 모두 포함하도록 패딩 적용
+    const yValues = [];
+    bars.forEach(b => { yValues.push(b.high, b.low); });
+    MA_PERIODS.forEach(p => { for (let i = offset; i < offset + bars.length; i++) { if (maSeries[p][i] != null) yValues.push(maSeries[p][i]); } });
+    const yMin = Math.min(...yValues);
+    const yMax = Math.max(...yValues);
+    const yPad = (yMax - yMin) * 0.05 || 1;
+
+    const priceDatasets = [
+      {
+        type: 'bar',
+        label: `${t.name}`,
+        data: bars.map(b => b.high),
+        ohlc,
+        backgroundColor: 'rgba(0,0,0,0)',
+        borderWidth: 0,
+        barPercentage: 0.7,
+        categoryPercentage: 0.85,
+      },
+      ...MA_PERIODS.map(p => ({
+        type: 'line',
+        label: `MA${p}`,
+        data: bars.map((b, i) => maSeries[p][offset + i]),
+        borderColor: MA_COLORS[p],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        spanGaps: true,
+        tension: 0.1,
+      })),
+      // 진입일(마지막 봉) 강조 — 캔들과 겹치지 않도록 저가 아래에 표시
+      {
+        type: 'line',
+        label: '진입일',
+        data: bars.map((b, i) => i === entryIdx ? b.low - (yMax - yMin) * 0.04 : null),
+        borderColor: 'transparent',
+        pointRadius: bars.map((_, i) => i === entryIdx ? 6 : 0),
+        pointStyle: 'triangle',
+        pointBackgroundColor: '#e8b84b',
+        spanGaps: false,
+      },
+    ];
+
+    const xAxisOpts = {
+      type: 'category',
+      ticks: { color: '#3d6080', maxRotation: 45, autoSkip: true, callback: (v, i) => labels[i]?.slice(5) },
+      grid: { color: 'rgba(58,159,216,.06)' },
+    };
+    // 거래량 차트는 위 가격 차트와 날짜축을 공유하므로 자체 날짜 라벨은 숨김
+    const xAxisOptsVolume = { ...xAxisOpts, ticks: { ...xAxisOpts.ticks, display: false } };
+
+    const priceKey = keyPrefix + 'Price', volumeKey = keyPrefix + 'Volume';
+    if (periodCharts[priceKey]) periodCharts[priceKey].destroy();
+    periodCharts[priceKey] = new Chart(priceCanvas, {
+      type: 'bar',
+      data: { labels, datasets: priceDatasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            display: true, position: 'top',
+            labels: { color: '#7fa8cc', boxWidth: 12, font: { size: 10.5 }, filter: item => item.text && item.text !== t.name },
+          },
+          tooltip: {
+            backgroundColor: '#071a2e', borderColor: 'rgba(58,159,216,.35)', borderWidth: 1,
+            titleColor: '#ddeeff', bodyColor: '#7fa8cc', padding: 10,
+            callbacks: {
+              label: ctx => {
+                if (ctx.datasetIndex === 0) {
+                  const v = ctx.dataset.ohlc[ctx.dataIndex];
+                  return `  시:${v.o.toLocaleString()} 고:${v.h.toLocaleString()} 저:${v.l.toLocaleString()} 종:${v.c.toLocaleString()}`;
+                }
+                if (ctx.dataset.label === '진입일') return ctx.parsed.y == null ? null : `  진입일 종가: ${bars[entryIdx].close.toLocaleString()}원`;
+                return ctx.parsed.y == null ? null : `  ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`;
+              },
+            },
+          },
+        },
+        scales: {
+          x: xAxisOpts,
+          y: {
+            position: 'left',
+            min: yMin - yPad,
+            max: yMax + yPad,
+            ticks: { color: '#3d6080', callback: v => v.toLocaleString() },
+            grid: { color: 'rgba(58,159,216,.06)' },
+          },
+        },
+      },
+    });
+
+    if (periodCharts[volumeKey]) periodCharts[volumeKey].destroy();
+    periodCharts[volumeKey] = new Chart(volumeCanvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: '거래량',
+          data: bars.map(b => b.volume),
+          backgroundColor: 'rgba(127,168,204,.45)',
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 300 },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#071a2e', borderColor: 'rgba(58,159,216,.35)', borderWidth: 1,
+            titleColor: '#ddeeff', bodyColor: '#7fa8cc', padding: 10,
+            callbacks: { label: ctx => `  거래량: ${ctx.parsed.y.toLocaleString()}` },
+          },
+        },
+        scales: {
+          x: xAxisOptsVolume,
+          y: {
+            position: 'left',
+            ticks: { color: '#3d6080', callback: v => v.toLocaleString() },
+            grid: { color: 'rgba(58,159,216,.06)' },
+          },
+        },
+      },
+    });
+  } catch (e) {
+    priceCanvas.closest('.chart-box').querySelectorAll('.chart-container').forEach(c => c.remove());
+    priceCanvas.closest('.chart-box').insertAdjacentHTML('beforeend', `<div class="empty">차트 데이터를 불러오지 못했습니다</div>`);
+  }
+}
+
+function row(k, v) { return `<div class="explain-row"><span class="explain-key">${k}</span><span>${v||'-'}</span></div>`; }
+function fmtAmount(v) {
+  if (v == null) return '-';
+  if (v >= 1e12) return (v/1e12).toFixed(2) + '조원';
+  if (v >= 1e8)  return (v/1e8).toFixed(0) + '억원';
+  return v.toLocaleString() + '원';
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// 기간분석 (E8)
+// ═════════════════════════════════════════════════════════════════════════════
+
+let loadedPeriodKey = null;  // 마지막으로 로드한 기간 (중복 로드 방지·갱신 추적)
+
+async function loadPeriod(start, end) {
+  loadedPeriodKey = start + '|' + end;
+  const body = document.getElementById('period-body');
+  body.innerHTML = '<div class="loading"><div class="spinner"></div>기간분석 로딩 중... (' + start + ' ~ ' + end + ')';
+
+  // 기존 Chart 인스턴스 파기
+  Object.values(periodCharts).forEach(c => c.destroy());
+  periodCharts = {};
+
+  try {
+    const [th, ld, ev, tr, dom, domTop] = await Promise.all([
+      apiFetch(`/api/period/themes?start=${start}&end=${end}`),
+      apiFetch(`/api/period/leaders?start=${start}&end=${end}`),
+      apiFetch(`/api/period/leader-events?start=${start}&end=${end}`),
+      apiFetch(`/api/period/theme-trend?start=${start}&end=${end}&top=20`).catch(() => null),
+      apiFetch(`/api/period/dominant-days?start=${start}&end=${end}`).catch(() => null),
+      apiFetch(`/api/period/dominant-top-stocks?start=${start}&end=${end}`).catch(() => null),
+    ]);
+
+    body.innerHTML = `
+      <div class="sec-hint" style="margin-bottom:12px">조회 기간: <strong>${start} ~ ${end}</strong> — 기간을 바꾼 뒤 '조회'를 누르면 모든 차트가 해당 기간으로 재계산됩니다</div>
+      <!-- §1 테마 -->
+      <div class="period-grid2">
+        <div class="chart-box">
+          <h3>상승 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
+          <div class="sub-note">크기 = 거래대금 &nbsp;·&nbsp; 색 = 기간수익률(테마 내 종목 평균, 진할수록 높음)</div>
+          <div class="treemap-wrap" id="tm-rising"></div>
+        </div>
+        <div class="chart-box">
+          <h3>하락 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
+          <div class="sub-note">크기 = 거래대금 &nbsp;·&nbsp; 색 = 하락폭 (진할수록 큰 하락)</div>
+          <div class="treemap-wrap" id="tm-falling"></div>
+        </div>
+      </div>
+      <div class="chart-box" style="margin-bottom:12px">
+        <h3>📈 테마 추이 <small style="color:var(--text-muted);font-weight:400">(기간 시작일 대비 누적수익률, 테마 내 종목 단순평균)</small></h3>
+        <div class="sec-hint">최대 5개 테마를 선택하여 코스피(점선) 대비 추이를 비교하세요 — 코스피보다 위에 있으면 시장 대비 초과수익</div>
+        <div class="theme-chips" id="trendChips"></div>
+        <div class="trend-legend" id="trendLegend"></div>
+        <div class="chart-container" style="height:340px"><canvas id="ch-trend"></canvas></div>
+        <div id="dominantDays"></div>
+      </div>
+
+      <div class="chart-box" id="period-stock-chart" style="margin-bottom:12px">
+        <h3 id="period-stock-chart-title">📈 종목 차트 <small style="color:var(--text-muted);font-weight:400">(아래 표에서 종목을 클릭하면 표시됩니다)</small></h3>
+        <div class="chart-container" style="height:300px"><canvas id="ch-period-price"></canvas></div>
+        <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-period-volume"></canvas></div>
+      </div>
+
+      <!-- §3 압도적 테마 종목 + 강세주도 이벤트 -->
+      <div class="period-grid2" style="margin-bottom:12px">
+        <div class="chart-box">
+          <h3>압도적 테마 종목 <small style="color:var(--text-muted);font-weight:400">(주도 테마일 1~2위)</small></h3>
+          <div class="sub-note">압도적 주도 테마일에 해당 테마 내 거래대금 1~2위였던 종목 — 거래대금은 천억원 단위</div>
+          <div class="table-wrap" id="dominant-top-table"></div>
+        </div>
+        <div class="chart-box">
+          <h3>강세주도 이벤트 <small style="color:var(--text-muted);font-weight:400">(기여점수 ≥7)</small></h3>
+          <div class="sub-note">${ev.total}건</div>
+          <div class="table-wrap" id="events-table"></div>
+        </div>
+      </div>
+
+      <!-- §2 주도종목 (맨 아래) -->
+      <div class="section" style="margin-bottom:12px">
+        <div class="section-header">
+          <h2>강세 주도종목</h2>
+          <span style="font-size:12px;color:var(--text-muted)">복합점수 = 평균기여/10 × log1p(등장일수) × (1+순위모멘텀)</span>
+        </div>
+        <div class="section-body">
+          <div class="table-wrap" id="leaders-table"></div>
+        </div>
+      </div>`;
+
+    renderRisingTreemap(th.rising || []);
+    renderFallingTreemap(th.falling || []);
+    initThemeTrend(tr, th.rising || []);
+    renderDominantDays(dom?.days || []);
+    renderLeadersTable(ld.leaders || []);
+    renderDominantTopStocks(domTop?.stocks || []);
+    renderEventsTable(ev.events || []);
+
+    // 디폴트: 압도적 테마 종목 맨 위 종목 차트 노출
+    if (!periodStockSelected && domTop?.stocks?.length) {
+      const s0 = domTop.stocks[0];
+      selectPeriodStock(s0.code, s0.name || s0.code, s0.date, true);
+    }
+
+  } catch(e) {
+    body.innerHTML = `<div class="error">기간분석 로드 실패: ${e.message}</div>`;
+  }
+}
+
+// §1 트리맵 진입점
+function renderRisingTreemap(items) {
+  buildTreemap('tm-rising', items, 'rising');
+}
+function renderFallingTreemap(items) {
+  buildTreemap('tm-falling', items, 'falling');
+}
+
+// §1 테마 추이 (StockInsight2 칩+라인 방식, 누적 복리)
+let trendData = null;            // { dates:[], series:[{theme1, cum:[]}] }
+let trendSelected = [];          // 선택 테마 (1~5개)
+let trendColorOf = {};           // 테마 → 고정 색
+
+function initThemeTrend(tr, rising) {
+  const box = document.getElementById('ch-trend')?.closest('.chart-box');
+  if (!tr || !tr.dates || !tr.series?.length) {
+    if (box) box.innerHTML = '<h3>📈 테마 추이</h3><div class="empty">' +
+      '/api/period/theme-trend 응답 없음 — 백엔드 구현 필요 (docs/viz_spec.md §1-T)</div>';
+    return;
+  }
+  trendData = tr;
+  // 기본 선택: 기간 내 누적 상승률(시계열 마지막 값)이 가장 높은 5개 테마
+  const byFinalCum = [...tr.series]
+    .filter(s => s.cum?.length)
+    .sort((a, b) => (b.cum[b.cum.length - 1] ?? -Infinity) - (a.cum[a.cum.length - 1] ?? -Infinity));
+  trendSelected = byFinalCum.slice(0, 5).map(s => s.theme1);
+  if (!trendSelected.length) trendSelected = tr.series.slice(0, 5).map(s => s.theme1);
+  assignTrendColors();
+  buildTrendChips();
+  renderThemeTrend();
+}
+
+function assignTrendColors() {
+  trendColorOf = {};
+  // 1) 현재 화면에 표시되는(trendSelected) 테마는 선택 순서(슬롯) 기준 고정 5색 우선 배정
+  //    — 칩을 클릭해 테마를 교체하면 그 자리(슬롯)에 맞는 색이 재배정됨
+  trendSelected.forEach((t, i) => {
+    trendColorOf[t] = TREND_SLOT_COLORS[i % TREND_SLOT_COLORS.length];
+  });
+  // 2) 선택되지 않은 나머지 칩은 기존 방식(고정색 우선, 그 외 DYNAMIC_PALETTE)으로 배정
+  //    (선택 전 칩 배경엔 안 쓰이지만, 다른 화면과의 일관성을 위해 유지)
+  let dynIdx = 0;
+  trendData.series.forEach(s => {
+    if (trendColorOf[s.theme1]) return;
+    trendColorOf[s.theme1] = FIXED_THEME_COLORS[s.theme1] || DYNAMIC_PALETTE[dynIdx++ % DYNAMIC_PALETTE.length];
+  });
+}
+
+function buildTrendChips() {
+  const el = document.getElementById('trendChips');
+  if (!el || !trendData) return;
+  el.innerHTML = '';
+  trendData.series.forEach(s => {
+    const t = s.theme1, col = trendColorOf[t], sel = trendSelected.includes(t);
+    const chip = document.createElement('span');
+    chip.className = 'chip' + (sel ? ' sel' : '');
+    chip.textContent = t;
+    if (sel) {
+      chip.style.background = col;
+      chip.style.borderColor = col;
+      chip.style.boxShadow = `0 0 8px ${col}66`;
+    }
+    chip.onclick = () => {
+      if (trendSelected.includes(t)) {
+        if (trendSelected.length > 1) trendSelected = trendSelected.filter(x => x !== t);
+      } else if (trendSelected.length < 5) trendSelected.push(t);
+      assignTrendColors();
+      buildTrendChips();
+      renderThemeTrend();
+    };
+    el.appendChild(chip);
+  });
+}
+
+function renderThemeTrend() {
+  const leg = document.getElementById('trendLegend');
+  leg.innerHTML = trendSelected.map(t =>
+    `<div class="tleg-item"><div class="tleg-line" style="background:${trendColorOf[t]};box-shadow:0 0 5px ${trendColorOf[t]}80"></div><span>${t}</span></div>`
+  ).join('') +
+    `<div class="tleg-item"><div class="tleg-line" style="background:repeating-linear-gradient(90deg,#9fb4c7 0 6px,transparent 6px 10px)"></div><span>코스피</span></div>`;
+
+  const dates = trendData.dates;
+  const datasets = trendSelected.map(t => {
+    const s = trendData.series.find(x => x.theme1 === t);
+    const col = trendColorOf[t];
+    return {
+      label: t,
+      data: s ? s.cum : [],
+      borderColor: col,
+      backgroundColor: col + '14',
+      borderWidth: 2.5,
+      pointRadius: dates.length > 40 ? 0 : 3,
+      pointHoverRadius: 6,
+      pointBackgroundColor: col,
+      pointBorderColor: '#04111f',
+      pointBorderWidth: 1.5,
+      tension: 0.35,
+      spanGaps: true,
+      fill: false,
+    };
+  });
+
+  if (trendData.kospi?.length) {
+    datasets.push({
+      label: '코스피',
+      data: trendData.kospi,
+      borderColor: '#9fb4c7',
+      backgroundColor: 'transparent',
+      borderWidth: 2,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0.35,
+      spanGaps: true,
+      fill: false,
+    });
+  }
+
+  if (periodCharts['trend']) periodCharts['trend'].destroy();
+  periodCharts['trend'] = new Chart(document.getElementById('ch-trend'), {
+    type: 'line',
+    data: { labels: dates.map(d => d.slice(5)), datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#071a2e',
+          borderColor: 'rgba(58,159,216,.35)',
+          borderWidth: 1,
+          titleColor: '#ddeeff',
+          bodyColor: '#7fa8cc',
+          padding: 10,
+          callbacks: {
+            label: ctx => {
+              const v = ctx.parsed.y;
+              return v == null ? `  ${ctx.dataset.label}: N/A`
+                : `  ${ctx.dataset.label}: ${(v >= 0 ? '+' : '') + v.toFixed(1)}%`;
+            },
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color: '#3d6080', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(58,159,216,.06)' } },
+        y: { ticks: { color: '#3d6080', callback: v => (v >= 0 ? '+' : '') + v + '%' }, grid: { color: 'rgba(58,159,216,.06)' } },
+      },
+    },
+  });
+}
+
+// §1-D 압도적 주도 테마일 (등락률·종목수·거래대금 모두 1위)
+function renderDominantDays(days) {
+  const el = document.getElementById('dominantDays');
+  if (!el) return;
+  if (!days.length) {
+    el.innerHTML = '<div class="sec-hint" style="margin-top:8px">압도적 주도 테마일 없음 — 등락률·종목수·거래대금 모두 1위인 테마(5종목 이상)가 같은 날 나타나지 않았습니다</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="sec-hint" style="margin-top:10px;margin-bottom:6px">📌 압도적 주도 테마일 <small style="color:var(--text-muted)">— 등락률·종목수·거래대금 3개 지표 모두 1위인 테마(5종목 이상)가 나타난 날 (${days.length}건)</small></div>
+    <div class="theme-chips">
+      ${days.map(d => `
+        <span class="chip" title="2위 대비 거래대금 ${d.amount_ratio != null ? d.amount_ratio.toFixed(1) + '배' : '-'}, 등락률 격차 +${d.pct_gap.toFixed(1)}%p">
+          ${d.date} <span class="badge badge-blue" style="margin-left:4px">${d.theme1}</span>
+          <span style="color:var(--text-muted);margin-left:4px">${d.n_stocks}종목 · ${(d.theme1_pct >= 0 ? '+' : '')}${d.theme1_pct.toFixed(1)}%</span>
+        </span>`).join('')}
+    </div>`;
+}
+
+// §2 주도종목 테이블
+let leadersData = [];
+function renderLeadersTable(items) {
+  leadersData = items;
+  const sorted = applySort('leaders-table', items);
+  const theadHtml = `<tr>
+      ${thSort('leaders-table', 'name', '종목')}${thSort('leaders-table', 'theme1', '테마')}${thSort('leaders-table', 'composite', '복합점수')}${thSort('leaders-table', 'appear_days', '등장일/커버리지')}
+      ${thSort('leaders-table', 'avg_score', '평균기여')}${thSort('leaders-table', 'max_score', 'MAX기여')}${thSort('leaders-table', 'cumret_pct', '누적수익')}${thSort('leaders-table', 'rank_momentum', '순위모멘텀')}${thSort('leaders-table', 'first_signal_date', '첫주도신호일')}${thSort('leaders-table', 'first_signal_rs', 'RS')}
+    </tr>`;
+  const rowFn = d => `
+      <tr onclick="selectPeriodStock('${d.code}', '${(d.name||d.code).replace(/'/g, "\\'")}', '${d.first_signal_date||''}')">
+        <td><strong>${d.name}</strong><br><small style="color:var(--text-muted)">${d.code}</small></td>
+        <td><span class="badge badge-blue">${d.theme1||'-'}</span></td>
+        <td><strong>${d.composite?.toFixed(3)}</strong></td>
+        <td>
+          ${d.appear_days}일
+          <div class="cov-bar"><div class="cov-fill" style="width:${Math.min(d.coverage_pct,100)}%"></div></div>
+          <small style="color:var(--text-muted)">${d.coverage_pct?.toFixed(0)}%</small>
+        </td>
+        <td>${d.avg_score?.toFixed(2)}</td>
+        <td>${d.max_score?.toFixed(1)}</td>
+        <td class="${pnlClass(d.cumret_pct)}">${pnlStr(d.cumret_pct)}</td>
+        <td class="${d.rank_momentum > 0 ? 'pos' : 'neg'}">${d.rank_momentum > 0 ? '+' : ''}${(d.rank_momentum * 100)?.toFixed(1)}pp</td>
+        <td>${d.first_signal_date||'-'}</td>
+        <td>${d.first_signal_rs != null ? d.first_signal_rs.toFixed(1) : '-'}</td>
+      </tr>`;
+  renderExpandableTable('leaders-table', sorted, theadHtml, rowFn, '선정 기준 충족 종목 없음', 10);
+  tableRenderers['leaders-table'] = () => renderLeadersTable(leadersData);
+}
+
+// §3 압도적 테마 종목 (주도 테마일 1~2위)
+let dominantTopData = [];
+function renderDominantTopStocks(stocks) {
+  dominantTopData = stocks;
+  const sorted = applySort('dominant-top-table', stocks);
+  const sizeLabel = s => s ? (s.endsWith('주') ? s : s + '주') : '-';
+  const theadHtml = `<tr>
+      ${thSort('dominant-top-table', 'date', '날짜')}${thSort('dominant-top-table', 'name', '종목')}${thSort('dominant-top-table', 'theme1_rank', '순위')}${thSort('dominant-top-table', 'size_class', '규모')}${thSort('dominant-top-table', 'theme1', '테마')}${thSort('dominant-top-table', 'change_pct', '상승율')}${thSort('dominant-top-table', 'amount_100b', '거래대금(천억원)')}${thSort('dominant-top-table', 'rs', 'RS')}
+    </tr>`;
+  const rowFn = s => `
+      <tr onclick="selectPeriodStock('${s.code}', '${(s.name||s.code).replace(/'/g, "\\'")}', '${s.date}')">
+        <td>${s.date}</td>
+        <td><strong>${s.name||s.code}</strong><br><small style="color:var(--text-muted)">${s.code}</small></td>
+        <td>#${s.theme1_rank}</td>
+        <td>${sizeLabel(s.size_class)}</td>
+        <td><span class="badge badge-blue">${s.theme1}</span></td>
+        <td class="${pnlClass(s.change_pct)}">${pnlStr(s.change_pct)}</td>
+        <td>${s.amount_100b != null ? s.amount_100b.toFixed(1) : '-'}</td>
+        <td>${s.rs != null ? s.rs.toFixed(1) : '-'}</td>
+      </tr>`;
+  renderExpandableTable('dominant-top-table', sorted, theadHtml, rowFn, '압도적 주도 테마일 없음', 10);
+  tableRenderers['dominant-top-table'] = () => renderDominantTopStocks(dominantTopData);
+}
+
+// §4 이벤트 테이블
+let eventsData = [];
+function renderEventsTable(events) {
+  eventsData = events;
+  const sorted = applySort('events-table', events);
+  const theadHtml = `<tr>
+      ${thSort('events-table', 'date', '날짜')}${thSort('events-table', 'name', '종목')}${thSort('events-table', 'theme1', '테마')}${thSort('events-table', 'contrib_score', '기여점수')}${thSort('events-table', 'cum_contrib', '누적기여')}${thSort('events-table', 'theme1_rank', '테마순위')}${thSort('events-table', 'rs', 'RS')}
+    </tr>`;
+  const rowFn = e => `
+      <tr onclick="selectPeriodStock('${e.code}', '${(e.name||e.code).replace(/'/g, "\\'")}', '${e.date}')">
+        <td>${e.date}</td>
+        <td><strong>${e.name||e.code}</strong><br><small style="color:var(--text-muted)">${e.code}</small></td>
+        <td><span class="badge badge-blue">${e.theme1||'-'}</span></td>
+        <td><strong style="color:var(--up)">${e.contrib_score?.toFixed(1)}</strong></td>
+        <td>${e.cum_contrib?.toFixed(1)}</td>
+        <td>${e.theme1_rank != null ? '#' + e.theme1_rank : '-'}</td>
+        <td>${e.rs != null ? e.rs.toFixed(1) : '-'}</td>
+      </tr>`;
+  renderExpandableTable('events-table', sorted, theadHtml, rowFn, '이벤트 없음', 10);
+  tableRenderers['events-table'] = () => renderEventsTable(eventsData);
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Treemap (Squarified algorithm)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function squarify(data, W, H) {
+  if (!data.length) return [];
+  const total = data.reduce((s, d) => s + d._v, 0);
+  if (!total) return [];
+  const items = [...data].map(d => ({ ...d, _v: d._v / total * W * H }));
+  items.sort((a, b) => b._v - a._v);
+  const results = [];
+
+  function worst(row, side) {
+    if (!row.length || !side) return Infinity;
+    const s = row.reduce((a, b) => a + b, 0);
+    const max = Math.max(...row), min = Math.min(...row);
+    if (!min) return Infinity;
+    return Math.max((s * s) / (side * side * min), (side * side * max) / (s * s));
+  }
+
+  function commit(row, rowItems, x, y, w, h) {
+    const s = row.reduce((a, b) => a + b, 0);
+    if (w >= h) {
+      const rw = h > 0 ? s / h : 0;
+      let oy = y;
+      for (let i = 0; i < rowItems.length; i++) {
+        const ch = s > 0 ? row[i] / s * h : 0;
+        results.push({ ...rowItems[i], x, y: oy, w: rw, h: ch });
+        oy += ch;
+      }
+      return { x: x + rw, y, w: w - rw, h };
+    } else {
+      const rh = w > 0 ? s / w : 0;
+      let ox = x;
+      for (let i = 0; i < rowItems.length; i++) {
+        const cw = s > 0 ? row[i] / s * w : 0;
+        results.push({ ...rowItems[i], x: ox, y, w: cw, h: rh });
+        ox += cw;
+      }
+      return { x, y: y + rh, w, h: h - rh };
+    }
+  }
+
+  let x = 0, y = 0, w = W, h = H;
+  let row = [], rowItems = [];
+
+  for (const item of items) {
+    const side = Math.min(w, h);
+    const test = [...row, item._v];
+    if (!row.length || worst(test, side) <= worst(row, side)) {
+      row.push(item._v); rowItems.push(item);
+    } else {
+      const next = commit(row, rowItems, x, y, w, h);
+      x = next.x; y = next.y; w = next.w; h = next.h;
+      row = [item._v]; rowItems = [item];
+    }
+  }
+  if (row.length) commit(row, rowItems, x, y, w, h);
+  return results;
+}
+
+function lerpColor(c1, c2, t) {
+  const h = s => parseInt(s, 16);
+  const r = Math.round(h(c1.slice(1,3)) + (h(c2.slice(1,3)) - h(c1.slice(1,3))) * t);
+  const g = Math.round(h(c1.slice(3,5)) + (h(c2.slice(3,5)) - h(c1.slice(3,5))) * t);
+  const b = Math.round(h(c1.slice(5,7)) + (h(c2.slice(5,7)) - h(c1.slice(5,7))) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+function buildTreemap(containerId, items, type) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  if (!items.length) { container.innerHTML = '<div class="empty" style="padding:40px">데이터 없음</div>'; return; }
+
+  // 색상 기준값 계산
+  const scoreKey = type === 'rising' ? 'composite' : 'fall_score';
+  const scores = items.map(d => d[scoreKey] ?? 0);
+  const sMin = Math.min(...scores), sMax = Math.max(...scores);
+  const retVals = items.map(d => d.cumret_pct ?? 0);
+  const retMin = Math.min(...retVals), retMax = Math.max(...retVals);
+
+  requestAnimationFrame(() => {
+    const W = container.clientWidth || 520;
+    const H = container.clientHeight || 300;
+
+    const data = items.map(d => ({
+      ...d,
+      _v: Math.max(d.total_amount || 1, 1),
+    }));
+
+    const rects = squarify(data, W, H);
+
+    container.innerHTML = '';
+    container.style.position = 'relative';
+
+    for (const r of rects) {
+      if (r.w < 1 || r.h < 1) continue;
+
+      // 색상: 누적상승율 기준 (범위 정규화)
+      let t;
+      if (type === 'rising') {
+        t = retMax > retMin ? (r.cumret_pct - retMin) / (retMax - retMin) : 0.6;
+        t = Math.max(0, Math.min(1, t));
+      } else {
+        // 하락 테마: 하락폭이 클수록 진한 빨강
+        const absRet = Math.abs(r.cumret_pct ?? 0);
+        const absMax = Math.max(...retVals.map(Math.abs), 1);
+        t = absMax > 0 ? absRet / absMax : 0.5;
+        t = Math.max(0, Math.min(1, t));
+      }
+
+      // 4색 이산 팔레트 (디자인 시스템 §트리맵): 상승률/하락률이 높을수록 진한 색
+      const RISE4 = ['#ff8c00', '#ff5833', '#c70038', '#920c3f'];  // pizazz→rose bud cherry
+      const FALL4 = ['#6fb4e2', '#4a7cba', '#2e4a9e', '#1e2876'];  // viking→lucky point
+      const pal = type === 'rising' ? RISE4 : FALL4;
+      const bg = pal[Math.min(3, Math.floor(t * 4))];
+
+      const cell = document.createElement('div');
+      cell.className = 'tm-cell';
+      cell.style.left   = r.x.toFixed(1) + 'px';
+      cell.style.top    = r.y.toFixed(1) + 'px';
+      cell.style.width  = r.w.toFixed(1) + 'px';
+      cell.style.height = r.h.toFixed(1) + 'px';
+      cell.style.background = bg;
+
+      // 텍스트 — 셀이 충분히 클 때만 표시
+      if (r.w > 36 && r.h > 24) {
+        const fs  = Math.min(14, Math.max(9, r.w / (r.theme1.length * 0.65)));
+        const fs2 = Math.max(8, fs - 2);
+        const retStr = (r.cumret_pct > 0 ? '+' : '') + (r.cumret_pct ?? 0).toFixed(1) + '%';
+        cell.innerHTML = `<div class="tm-inner">
+          <div class="tm-name" style="font-size:${fs}px">${r.theme1}</div>
+          ${r.h > 40 ? `<div class="tm-ret" style="font-size:${fs2}px">${retStr}</div>` : ''}
+        </div>`;
+      }
+
+      // 마우스오버 팝업
+      cell.addEventListener('mouseenter', e => showTmTooltip(e, r, type));
+      cell.addEventListener('mousemove',  e => moveTmTooltip(e));
+      cell.addEventListener('mouseleave', hideTmTooltip);
+
+      container.appendChild(cell);
+    }
+  });
+}
+
+// ── Treemap 툴팁 ──────────────────────────────────────────────────────────────
+function showTmTooltip(e, item, type) {
+  const tt = document.getElementById('tm-tooltip');
+  document.getElementById('tt-title').textContent = item.theme1;
+  const scoreLabel = type === 'rising' ? '종합점수' : '하락점수';
+  const scoreVal   = type === 'rising' ? item.composite : item.fall_score;
+  document.getElementById('tt-score-label').textContent = scoreLabel;
+  document.getElementById('tt-score').textContent = scoreVal != null ? scoreVal.toFixed(4) : '-';
+  const ret = item.cumret_pct ?? 0;
+  const retEl = document.getElementById('tt-cumret');
+  retEl.textContent = (ret > 0 ? '+' : '') + ret.toFixed(2) + '%';
+  retEl.style.color = ret >= 0 ? '#e05e30' : '#3a9fd8';
+  document.getElementById('tt-amount').textContent = fmtAmount(item.total_amount);
+  document.getElementById('tt-upratio').textContent = ((item.up_ratio ?? 0) * 100).toFixed(1) + '%';
+  document.getElementById('tt-days').textContent = (item.appear_days ?? '-') + '일';
+  tt.style.display = 'block';
+  moveTmTooltip(e);
+}
+
+function moveTmTooltip(e) {
+  const tt = document.getElementById('tm-tooltip');
+  const tw = tt.offsetWidth  || 200;
+  const th = tt.offsetHeight || 160;
+  const x  = e.clientX + 16;
+  const y  = e.clientY - 10;
+  tt.style.left = (x + tw > window.innerWidth  ? e.clientX - tw - 12 : x) + 'px';
+  tt.style.top  = (y + th > window.innerHeight ? e.clientY - th - 12 : y) + 'px';
+}
+
+function hideTmTooltip() {
+  document.getElementById('tm-tooltip').style.display = 'none';
+}
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────────
+window.addEventListener('load', init);
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.target.id === 'start-date' || e.target.id === 'end-date')) doQuery();
+});
+</script>
+</body>
+</html>

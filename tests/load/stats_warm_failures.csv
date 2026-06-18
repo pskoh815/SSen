@@ -1,0 +1,2 @@
+Method,Name,Error,Occurrences,First Seen,Last Seen
+GET,/themes/{theme}/summary,HTTPError('404 Client Error: Not Found for url: /themes/{theme}/summary'),3,2026-06-04T06:50:32Z,2026-06-04T06:50:50Z

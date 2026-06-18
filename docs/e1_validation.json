@@ -1,0 +1,1113 @@
+{
+  "fact_daily_stock": {
+    "partitions": [
+      {
+        "partition": "yearmonth=202001",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-01-02",
+        "max_date": "2020-01-31"
+      },
+      {
+        "partition": "yearmonth=202002",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-02-03",
+        "max_date": "2020-02-28"
+      },
+      {
+        "partition": "yearmonth=202003",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-03-02",
+        "max_date": "2020-03-31"
+      },
+      {
+        "partition": "yearmonth=202004",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-04-01",
+        "max_date": "2020-04-29"
+      },
+      {
+        "partition": "yearmonth=202005",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-05-04",
+        "max_date": "2020-05-29"
+      },
+      {
+        "partition": "yearmonth=202006",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-06-01",
+        "max_date": "2020-06-30"
+      },
+      {
+        "partition": "yearmonth=202007",
+        "rows": 2300,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-07-01",
+        "max_date": "2020-07-31"
+      },
+      {
+        "partition": "yearmonth=202008",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-08-03",
+        "max_date": "2020-08-31"
+      },
+      {
+        "partition": "yearmonth=202009",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-09-01",
+        "max_date": "2020-09-29"
+      },
+      {
+        "partition": "yearmonth=202010",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-10-05",
+        "max_date": "2020-10-30"
+      },
+      {
+        "partition": "yearmonth=202011",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-11-02",
+        "max_date": "2020-11-30"
+      },
+      {
+        "partition": "yearmonth=202012",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2020-12-01",
+        "max_date": "2020-12-30"
+      },
+      {
+        "partition": "yearmonth=202101",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-01-04",
+        "max_date": "2021-01-29"
+      },
+      {
+        "partition": "yearmonth=202102",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-02-01",
+        "max_date": "2021-02-26"
+      },
+      {
+        "partition": "yearmonth=202103",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-03-02",
+        "max_date": "2021-03-31"
+      },
+      {
+        "partition": "yearmonth=202104",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-04-01",
+        "max_date": "2021-04-30"
+      },
+      {
+        "partition": "yearmonth=202105",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-05-03",
+        "max_date": "2021-05-31"
+      },
+      {
+        "partition": "yearmonth=202106",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-06-01",
+        "max_date": "2021-06-30"
+      },
+      {
+        "partition": "yearmonth=202107",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-07-01",
+        "max_date": "2021-07-30"
+      },
+      {
+        "partition": "yearmonth=202108",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-08-02",
+        "max_date": "2021-08-31"
+      },
+      {
+        "partition": "yearmonth=202109",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-09-01",
+        "max_date": "2021-09-30"
+      },
+      {
+        "partition": "yearmonth=202110",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-10-01",
+        "max_date": "2021-10-29"
+      },
+      {
+        "partition": "yearmonth=202111",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-11-01",
+        "max_date": "2021-11-30"
+      },
+      {
+        "partition": "yearmonth=202112",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2021-12-01",
+        "max_date": "2021-12-30"
+      },
+      {
+        "partition": "yearmonth=202201",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-01-03",
+        "max_date": "2022-01-28"
+      },
+      {
+        "partition": "yearmonth=202202",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-02-03",
+        "max_date": "2022-02-28"
+      },
+      {
+        "partition": "yearmonth=202203",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-03-02",
+        "max_date": "2022-03-31"
+      },
+      {
+        "partition": "yearmonth=202204",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-04-01",
+        "max_date": "2022-04-29"
+      },
+      {
+        "partition": "yearmonth=202205",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-05-02",
+        "max_date": "2022-05-31"
+      },
+      {
+        "partition": "yearmonth=202206",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-06-02",
+        "max_date": "2022-06-30"
+      },
+      {
+        "partition": "yearmonth=202207",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-07-01",
+        "max_date": "2022-07-29"
+      },
+      {
+        "partition": "yearmonth=202208",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-08-01",
+        "max_date": "2022-08-31"
+      },
+      {
+        "partition": "yearmonth=202209",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-09-01",
+        "max_date": "2022-09-30"
+      },
+      {
+        "partition": "yearmonth=202210",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-10-04",
+        "max_date": "2022-10-31"
+      },
+      {
+        "partition": "yearmonth=202211",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-11-01",
+        "max_date": "2022-11-30"
+      },
+      {
+        "partition": "yearmonth=202212",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2022-12-01",
+        "max_date": "2022-12-29"
+      },
+      {
+        "partition": "yearmonth=202301",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-01-02",
+        "max_date": "2023-01-31"
+      },
+      {
+        "partition": "yearmonth=202302",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-02-01",
+        "max_date": "2023-02-28"
+      },
+      {
+        "partition": "yearmonth=202303",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-03-02",
+        "max_date": "2023-03-31"
+      },
+      {
+        "partition": "yearmonth=202304",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-04-03",
+        "max_date": "2023-04-28"
+      },
+      {
+        "partition": "yearmonth=202305",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-05-02",
+        "max_date": "2023-05-31"
+      },
+      {
+        "partition": "yearmonth=202306",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-06-01",
+        "max_date": "2023-06-30"
+      },
+      {
+        "partition": "yearmonth=202307",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-07-03",
+        "max_date": "2023-07-31"
+      },
+      {
+        "partition": "yearmonth=202308",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-08-01",
+        "max_date": "2023-08-31"
+      },
+      {
+        "partition": "yearmonth=202309",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-09-01",
+        "max_date": "2023-09-27"
+      },
+      {
+        "partition": "yearmonth=202310",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-10-04",
+        "max_date": "2023-10-31"
+      },
+      {
+        "partition": "yearmonth=202311",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-11-01",
+        "max_date": "2023-11-30"
+      },
+      {
+        "partition": "yearmonth=202312",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2023-12-01",
+        "max_date": "2023-12-28"
+      },
+      {
+        "partition": "yearmonth=202401",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-01-02",
+        "max_date": "2024-01-31"
+      },
+      {
+        "partition": "yearmonth=202402",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-02-01",
+        "max_date": "2024-02-29"
+      },
+      {
+        "partition": "yearmonth=202403",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-03-04",
+        "max_date": "2024-03-29"
+      },
+      {
+        "partition": "yearmonth=202404",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-04-01",
+        "max_date": "2024-04-30"
+      },
+      {
+        "partition": "yearmonth=202405",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-05-02",
+        "max_date": "2024-05-31"
+      },
+      {
+        "partition": "yearmonth=202406",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-06-03",
+        "max_date": "2024-06-28"
+      },
+      {
+        "partition": "yearmonth=202407",
+        "rows": 2300,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-07-01",
+        "max_date": "2024-07-31"
+      },
+      {
+        "partition": "yearmonth=202408",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-08-01",
+        "max_date": "2024-08-30"
+      },
+      {
+        "partition": "yearmonth=202409",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-09-02",
+        "max_date": "2024-09-30"
+      },
+      {
+        "partition": "yearmonth=202410",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-10-02",
+        "max_date": "2024-10-31"
+      },
+      {
+        "partition": "yearmonth=202411",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-11-01",
+        "max_date": "2024-11-29"
+      },
+      {
+        "partition": "yearmonth=202412",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2024-12-02",
+        "max_date": "2024-12-30"
+      },
+      {
+        "partition": "yearmonth=202501",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-01-02",
+        "max_date": "2025-01-31"
+      },
+      {
+        "partition": "yearmonth=202502",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-02-03",
+        "max_date": "2025-02-28"
+      },
+      {
+        "partition": "yearmonth=202503",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-03-04",
+        "max_date": "2025-03-31"
+      },
+      {
+        "partition": "yearmonth=202504",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-04-01",
+        "max_date": "2025-04-30"
+      },
+      {
+        "partition": "yearmonth=202505",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-05-02",
+        "max_date": "2025-05-30"
+      },
+      {
+        "partition": "yearmonth=202506",
+        "rows": 1900,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-06-02",
+        "max_date": "2025-06-30"
+      },
+      {
+        "partition": "yearmonth=202507",
+        "rows": 2300,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-07-01",
+        "max_date": "2025-07-31"
+      },
+      {
+        "partition": "yearmonth=202508",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-08-01",
+        "max_date": "2025-08-29"
+      },
+      {
+        "partition": "yearmonth=202509",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-09-01",
+        "max_date": "2025-09-30"
+      },
+      {
+        "partition": "yearmonth=202510",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-10-01",
+        "max_date": "2025-10-31"
+      },
+      {
+        "partition": "yearmonth=202511",
+        "rows": 2000,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-11-03",
+        "max_date": "2025-11-28"
+      },
+      {
+        "partition": "yearmonth=202512",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2025-12-01",
+        "max_date": "2025-12-30"
+      },
+      {
+        "partition": "yearmonth=202601",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2026-01-02",
+        "max_date": "2026-01-30"
+      },
+      {
+        "partition": "yearmonth=202602",
+        "rows": 1700,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2026-02-02",
+        "max_date": "2026-02-27"
+      },
+      {
+        "partition": "yearmonth=202603",
+        "rows": 2100,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2026-03-03",
+        "max_date": "2026-03-31"
+      },
+      {
+        "partition": "yearmonth=202604",
+        "rows": 2200,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2026-04-01",
+        "max_date": "2026-04-30"
+      },
+      {
+        "partition": "yearmonth=202605",
+        "rows": 1800,
+        "duplicates_on_key": 0,
+        "null_counts": {
+          "date": 0,
+          "rank": 0,
+          "code": 0,
+          "name": 0,
+          "market": 0
+        },
+        "min_date": "2026-05-04",
+        "max_date": "2026-05-29"
+      }
+    ],
+    "summary": {
+      "total_rows": 157200,
+      "total_partitions": 77,
+      "min_date": "2020-01-02",
+      "max_date": "2026-05-29",
+      "unique_dates": 1572,
+      "unique_codes": 2668,
+      "total_duplicates_on_key": 0
+    },
+    "errors": [],
+    "status": "PASS"
+  },
+  "fact_kospi": {
+    "status": "PASS",
+    "rows": 1573,
+    "min_date": "2020-01-02",
+    "max_date": "2026-05-29",
+    "duplicate_dates": 0
+  },
+  "dim_theme": {
+    "status": "PASS",
+    "rows": 3042,
+    "duplicate_codes": 0,
+    "unique_theme1": 180
+  },
+  "sizes": {
+    "total_parquet_mb": 17.05,
+    "manifest_kb": 65.2
+  },
+  "validated_at": "2026-06-04T05:17:37.539228"
+}

@@ -1,0 +1,62 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: ssen_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ssen
+      POSTGRES_PASSWORD: ssen
+      POSTGRES_DB: ssen
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ssen_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ssen -d ssen"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: ssen_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ssen_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      SSEN_DB_URL: postgresql://ssen:ssen@postgres:5432/ssen
+      SSEN_REDIS_URL: redis://redis:6379
+      SSEN_CACHE_TTL: "300"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+    command: uvicorn ssen.api.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+volumes:
+  ssen_pgdata:
+
+# NOTE: 현재 환경은 Windows 서비스 직접 설치.
+# Docker 환경에서는: docker compose up -d
+# 포트 충돌 시 기존 서비스 중지 필요.
