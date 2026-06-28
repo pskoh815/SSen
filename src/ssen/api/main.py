@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 import logging.config
+import sys
 import threading
 import time
 from datetime import date, datetime, timezone
@@ -47,7 +48,14 @@ from ..analysis.period_analysis import (
     api_period_themes, api_period_theme_trend, api_period_dominant_days,
     api_period_dominant_top_stocks, api_period_theme_rank_days,
     api_period_leaders, api_period_breadth, api_period_leader_events,
+    FACT_DAILY_STOCK_MIN_DATE, PRE2020_NOTICE,
 )
+
+
+def _pre2020_notice(start: date) -> Optional[list[str]]:
+    """2020-01-02 이전을 포함하는 조회에 공통으로 붙이는 안내문구
+    (테마 소급 적용 + 서바이버십 편향 — 기간분석/모든 백테스트 탭 공통)."""
+    return PRE2020_NOTICE if start < FACT_DAILY_STOCK_MIN_DATE else None
 from ..analysis.perf_timer import reset_db_timer, get_db_time
 from ..analysis.supertrend_strategy import api_supertrend_trades, api_stock_ohlcv
 from ..analysis.rs_breakout_strategy import api_rs_breakout_trades, api_rs_matrix
@@ -88,6 +96,19 @@ def dashboard():
 
 @app.on_event("startup")
 def startup():
+    # 서버를 PowerShell Start-Process 등으로 띄우면 콘솔 인코딩이 cp949로 잡혀,
+    # daily_collect/e3_refresh 같은 백그라운드 배치의 print()에 ✓ 같은 유니코드
+    # 문자가 섞이면 UnicodeEncodeError로 배치 전체가 죽는 사고가 있었음(2026-06-18
+    # 16:30 daily_collect: 키움 수집(거래대금/코스피시세/ADR)은 성공해 incoming xlsx까지
+    # 만들어졌는데, update_all.py의 "YES ✓" print 한 줄 때문에 E1~E3/OHLCV가 통째로
+    # 스킵됨). 프로세스 시작 시 stdout/stderr를 UTF-8(오류 시 대체문자)로 강제 재설정해
+    # 어떤 print 문이든 인코딩 때문에 배치가 죽지 않게 함.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
     db.init_pool(minconn=2, maxconn=10)
     _cache_mod.init_redis()          # Redis 연결 시도 (실패 시 TTLCache fallback)
     init_scheduler()                 # 배치 스케줄러 시작
@@ -400,6 +421,7 @@ def trades(
 
     result = TradesResponse(
         meta=_meta(dv),
+        notice=_pre2020_notice(start),
         total=len(rows),
         summary=TradeSummary(**summary_dict),
         data=[Trade(**r) for r in rows],
@@ -522,6 +544,7 @@ def period_themes(
             falling =[PeriodThemeItem(**r) for r in raw["falling"]],
             rotating=[PeriodThemeItem(**r) for r in raw["rotating"]],
             all     =[PeriodThemeItem(**r) for r in raw["all"]],
+            notice  =raw.get("notice"),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_themes", dv, result, start=str(start), end=str(end))
@@ -551,6 +574,7 @@ def period_theme_trend(
             dates =raw["dates"],
             series=[ThemeTrendSeries(**s) for s in raw["series"]],
             kospi =raw["kospi"],
+            notice=raw.get("notice"),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_theme_trend", dv, result, start=str(start), end=str(end), top=top)
@@ -578,6 +602,7 @@ def period_dominant_days(
             meta=_meta(dv), start=start, end=end,
             days =[PeriodDominantDay(**r) for r in raw["days"]],
             total=raw["total"],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_dominant_days", dv, result, start=str(start), end=str(end))
@@ -605,6 +630,7 @@ def period_theme_rank_days(
             meta=_meta(dv), start=start, end=end,
             days =[PeriodThemeRankDay(**r) for r in raw["days"]],
             total=raw["total"],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_theme_rank_days", dv, result, start=str(start), end=str(end))
@@ -634,6 +660,7 @@ def period_dominant_top_stocks(
             meta=_meta(dv), start=start, end=end,
             stocks=[PeriodDominantStock(**s, rs=_rs_lookup(rs_matrix, s["date"], s["code"])) for s in raw["stocks"]],
             total=raw["total"],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_dominant_top_stocks", dv, result, start=str(start), end=str(end), top_rank=top_rank)
@@ -661,6 +688,7 @@ def period_supertrend_trades(
             meta=_meta(dv), start=start, end=end,
             summary=SuperTrendSummary(**raw["summary"]),
             trades=[SuperTrendTrade(**t) for t in raw["trades"]],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_supertrend_trades", dv, result, start=str(start), end=str(end))
@@ -688,6 +716,7 @@ def period_rs_breakout_trades(
             meta=_meta(dv), start=start, end=end,
             summary=RsBreakoutSummary(**raw["summary"]),
             trades=[RsBreakoutTrade(**t) for t in raw["trades"]],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_rs_breakout_trades", dv, result, start=str(start), end=str(end))
@@ -715,6 +744,7 @@ def period_pullback_trades(
             meta=_meta(dv), start=start, end=end,
             summary=PullbackSummary(**raw["summary"]),
             trades=[PullbackTrade(**t) for t in raw["trades"]],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_pullback_trades", dv, result, start=str(start), end=str(end))
@@ -744,6 +774,7 @@ def period_leaders(
             total  =raw["total"],
             leaders=[PeriodLeaderItem(**r, first_signal_rs=_rs_lookup(rs_matrix, r["first_signal_date"], r["code"]))
                      for r in raw["leaders"]],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_leaders", dv, result, start=str(start), end=str(end))
@@ -771,6 +802,7 @@ def period_breadth(
             meta=_meta(dv), start=start, end=end,
             by_size  ={k: BucketCounts(**v) for k, v in raw["by_size"].items()},
             by_market={k: BucketCounts(**v) for k, v in raw["by_market"].items()},
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_breadth", dv, result, start=str(start), end=str(end))
@@ -799,6 +831,7 @@ def period_leader_events(
             meta=_meta(dv), start=start, end=end,
             total =raw["total"],
             events=[PeriodEventItem(**r, rs=_rs_lookup(rs_matrix, r["date"], r["code"])) for r in raw["events"]],
+            notice=_pre2020_notice(start),
         )
         perf.mark("serialize")
         _cache_mod.cache_set("period_events", dv, result, start=str(start), end=str(end))

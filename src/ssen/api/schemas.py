@@ -89,6 +89,7 @@ class TradesResponse(BaseModel):
     total: int
     summary: TradeSummary
     data: list[Trade]
+    notice: Optional[list[str]] = None
 
 
 class TradeSummary(BaseModel):
@@ -175,17 +176,27 @@ class PerfResponse(BaseModel):
 
 # ── /api/period/* (E8) ──────────────────────────────────────────────────────
 
+class PeriodTopStock(BaseModel):
+    code: Optional[str] = None
+    name: Optional[str] = None
+    cumret_pct: Optional[float] = None
+
+
 class PeriodThemeItem(BaseModel):
     theme1: str
     appear_days: int
     cumret_pct: float
-    cumret_first: float
-    cumret_second: float
+    cumret_first: Optional[float]   # 1거래일 폴백 시 전반/후반 정의 불가 → None
+    cumret_second: Optional[float]  # 1거래일 폴백 시 전반/후반 정의 불가 → None
     total_amount: float
     up_ratio: float
     composite: float
-    rotation: float
+    rotation: Optional[float]       # 1거래일 폴백 시 로테이션 정의 불가 → None
     fall_score: Optional[float]
+    top_stock_code: Optional[str] = None
+    top_stock_name: Optional[str] = None
+    top_stock_cumret_pct: Optional[float] = None
+    top_stocks: list[PeriodTopStock] = []  # 테마 내 1~3위 종목 (상승 테마=수익률 상위, 하락 테마=하위)
 
 
 class PeriodThemesResponse(BaseModel):
@@ -196,6 +207,7 @@ class PeriodThemesResponse(BaseModel):
     falling: list[PeriodThemeItem]
     rotating: list[PeriodThemeItem]
     all: list[PeriodThemeItem]
+    notice: Optional[list[str]] = None
 
 
 class ThemeTrendSeries(BaseModel):
@@ -210,6 +222,7 @@ class PeriodThemeTrendResponse(BaseModel):
     dates: list[str]
     series: list[ThemeTrendSeries]
     kospi: list[float]
+    notice: Optional[list[str]] = None
 
 
 class PeriodDominantDay(BaseModel):
@@ -228,6 +241,7 @@ class PeriodDominantDaysResponse(BaseModel):
     end: date
     days: list[PeriodDominantDay]
     total: int
+    notice: Optional[list[str]] = None
 
 
 class PeriodThemeRankDay(BaseModel):
@@ -246,6 +260,7 @@ class PeriodThemeRankDaysResponse(BaseModel):
     end: date
     days: list[PeriodThemeRankDay]
     total: int
+    notice: Optional[list[str]] = None
 
 
 class PeriodDominantStock(BaseModel):
@@ -266,6 +281,7 @@ class PeriodDominantTopStocksResponse(BaseModel):
     end: date
     stocks: list[PeriodDominantStock]
     total: int
+    notice: Optional[list[str]] = None
 
 
 class PeriodLeaderItem(BaseModel):
@@ -290,6 +306,7 @@ class PeriodLeadersResponse(BaseModel):
     end: date
     total: int
     leaders: list[PeriodLeaderItem]
+    notice: Optional[list[str]] = None
 
 
 class BucketCounts(BaseModel):
@@ -307,6 +324,7 @@ class PeriodBreadthResponse(BaseModel):
     end: date
     by_size: dict[str, BucketCounts]
     by_market: dict[str, BucketCounts]
+    notice: Optional[list[str]] = None
 
 
 class PeriodEventItem(BaseModel):
@@ -326,6 +344,7 @@ class PeriodEventsResponse(BaseModel):
     end: date
     total: int
     events: list[PeriodEventItem]
+    notice: Optional[list[str]] = None
 
 
 # ── /api/period/supertrend-trades (E9) ───────────────────────────────────────
@@ -360,6 +379,7 @@ class SuperTrendTradesResponse(BaseModel):
     end: date
     summary: SuperTrendSummary
     trades: list[SuperTrendTrade]
+    notice: Optional[list[str]] = None
 
 
 # ── /api/period/rs-breakout-trades (E10) ─────────────────────────────────────
@@ -394,6 +414,7 @@ class RsBreakoutTradesResponse(BaseModel):
     end: date
     summary: RsBreakoutSummary
     trades: list[RsBreakoutTrade]
+    notice: Optional[list[str]] = None
 
 
 # ── /api/period/pullback-trades (E11) ────────────────────────────────────────
@@ -427,3 +448,4 @@ class PullbackTradesResponse(BaseModel):
     end: date
     summary: PullbackSummary
     trades: list[PullbackTrade]
+    notice: Optional[list[str]] = None

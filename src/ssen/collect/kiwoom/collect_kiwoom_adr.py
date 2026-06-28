@@ -23,13 +23,17 @@ import json
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from pykiwoom.kiwoom import Kiwoom
 
+from _watchdog import Watchdog  # 4개 키움 수집 스크립트 공용 (같은 디렉터리)
+
 OUTPUT_DIR = Path(r"C:\MyClaude\ssen-dashboard\data\incoming\kiwoom")
 CONFIRMED_PATH = Path(r"C:\MyClaude\ssen-dashboard\data\adr_verify\CONFIRMED.json")
 MARKETS = [("001", "0", "KOSPI"), ("101", "1", "KOSDAQ")]
+WATCHDOG_TIMEOUT_SEC = 60  # 시장 2개 × 1회 호출이라 60초면 충분 (2026-06-18 통일 적용)
 
 
 def is_timing_confirmed() -> bool:
@@ -37,7 +41,7 @@ def is_timing_confirmed() -> bool:
     return CONFIRMED_PATH.exists()
 
 
-def fetch_adr_today(kiwoom: Kiwoom, target_date: date) -> pd.DataFrame:
+def fetch_adr_today(kiwoom: Kiwoom, target_date: date, watchdog: Optional[Watchdog] = None) -> pd.DataFrame:
     verified = is_timing_confirmed()
     rows = []
     for index_code, market_gubun, market_name in MARKETS:
@@ -48,6 +52,8 @@ def fetch_adr_today(kiwoom: Kiwoom, target_date: date) -> pd.DataFrame:
             output="업종현재가일별",
             next=0,
         )
+        if watchdog:
+            watchdog.reset()
         if df is None or df.empty:
             print(f"[경고] {market_name} 조회 결과 없음")
             continue
@@ -79,14 +85,19 @@ def main():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    watchdog = Watchdog(WATCHDOG_TIMEOUT_SEC)
+    watchdog.reset()  # CommConnect 자체가 멈추는 경우(중복 로그인 팝업 등)도 대비
+
     kiwoom = Kiwoom()
     kiwoom.CommConnect(block=True)
+    watchdog.reset()
     if kiwoom.GetConnectState() != 1:
         print("[오류] 키움 OpenAPI 로그인 실패")
         sys.exit(1)
     print(f"[로그인 성공] 계좌: {kiwoom.GetLoginInfo('ACCNO')}")
 
-    result = fetch_adr_today(kiwoom, target_date)
+    result = fetch_adr_today(kiwoom, target_date, watchdog)
+    watchdog.stop()
     if result.empty:
         print("[오류] 수집 결과가 비어있음")
         sys.exit(1)

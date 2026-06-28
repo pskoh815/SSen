@@ -33,9 +33,7 @@
      무한 행 대신 "어디까지 했는지"를 즉시 알 수 있고, 재실행 시 --resume으로 이어서 가능
 """
 import argparse
-import os
 import sys
-import threading
 import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -43,39 +41,13 @@ from pathlib import Path
 import pandas as pd
 from pykiwoom.kiwoom import Kiwoom
 
+from _watchdog import Watchdog  # 4개 키움 수집 스크립트 공용 (같은 디렉터리)
+
 OUTPUT_DIR = Path(r"C:\MyClaude\ssen-dashboard\data\incoming\kiwoom")
 CALL_INTERVAL_SEC = 0.3  # 1초당 5회 제한 대비 안전마진 (약 3.3회/초)
 SAVE_EVERY_N = 20        # 이만큼 처리할 때마다 CSV에 append 저장
 WATCHDOG_TIMEOUT_SEC = 30  # 이 시간 동안 진행 없으면 행(hang)으로 간주, 강제 종료
-
-
-class Watchdog:
-    """일정 시간 진행(reset 호출)이 없으면 프로세스를 강제 종료.
-    중복 로그인 메시지박스 등으로 block_request()가 영원히 안 끝나는 경우를 대비."""
-
-    def __init__(self, timeout_sec: float):
-        self.timeout_sec = timeout_sec
-        self._timer: threading.Timer | None = None
-        self._lock = threading.Lock()
-
-    def _fire(self) -> None:
-        print(f"\n[워치독] {self.timeout_sec:.0f}초 동안 진행 없음 — 행(hang) 의심, 강제 종료 "
-              f"(지금까지 저장된 분량은 디스크에 보존됨, --resume으로 재시작 가능)")
-        sys.stdout.flush()
-        os._exit(99)
-
-    def reset(self) -> None:
-        with self._lock:
-            if self._timer:
-                self._timer.cancel()
-            self._timer = threading.Timer(self.timeout_sec, self._fire)
-            self._timer.daemon = True
-            self._timer.start()
-
-    def stop(self) -> None:
-        with self._lock:
-            if self._timer:
-                self._timer.cancel()
+# 워치독 발동 시 지금까지 저장된 분량은 디스크에 보존되며, --resume으로 이어서 재시작 가능
 
 
 def fetch_stock_daily(kiwoom: Kiwoom, code: str, end_date: date) -> pd.DataFrame:

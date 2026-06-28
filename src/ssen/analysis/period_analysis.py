@@ -182,17 +182,37 @@ def theme_trend(m: pd.DataFrame, top: int = 20) -> dict:
 import math
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import duckdb
 
 from .perf_timer import timed_db_query
 
-_ROOT   = Path(__file__).resolve().parents[3]
-_FDS    = str(_ROOT / "data" / "parquet" / "fact_daily_stock" / "**" / "*.parquet").replace("\\", "/")
-_FKOSPI = str(_ROOT / "data" / "parquet" / "fact_kospi"       / "**" / "*.parquet").replace("\\", "/")
+_ROOT      = Path(__file__).resolve().parents[3]
+_FDS_2020P = str(_ROOT / "data" / "parquet" / "fact_daily_stock" / "**" / "*.parquet").replace("\\", "/")
+# 2015~2019 구간(2026-06-23 KRX OPEN API 백필 + calc_derived.py 동일 공식 재적용) — 압도적
+# 테마종목/강세주도종목/이벤트 등 fact_daily_stock 의존 위젯을 2020년 이전에도 지원하기
+# 위해 도입. fact_daily_stock과 dtype까지 동일한 스키마로 저장해 동일 glob 패턴으로 합쳐 읽음.
+_FDS_PRE2020 = str(_ROOT / "data" / "parquet" / "fact_daily_stock_pre2020" / "**" / "*.parquet").replace("\\", "/")
+_FDS       = "['" + _FDS_PRE2020 + "', '" + _FDS_2020P + "']"
+_FKOSPI    = str(_ROOT / "data" / "parquet" / "fact_kospi"       / "**" / "*.parquet").replace("\\", "/")
+_FOHLCV    = str(_ROOT / "data" / "market"  / "ohlcv"            / "**" / "*.parquet").replace("\\", "/")
+_DIM_THEME = str(_ROOT / "data" / "parquet" / "dim_theme" / "data.parquet").replace("\\", "/")
 
 MIN_APPEAR_DAYS = 2  # 기간수익률(시작가→종료가) 산출에 필요한 최소 등장일수
+
+# fact_daily_stock(거래대금/테마 거래대금 등)은 2020-01-02부터만 존재 — 그 이전 구간은
+# market_ohlcv(2015~2019 백필분)+dim_theme(현재 테마 매핑)을 조인해 테마분석을 대체
+# 수행한다(2026-06-20 도입). 이 경로로 계산된 결과는 PRE2020_NOTICE를 응답에 포함.
+FACT_DAILY_STOCK_MIN_DATE = date(2020, 1, 2)
+
+PRE2020_NOTICE = [
+    "2020년 이전 테마 분류는 현재 분류를 소급 적용한 것 (특히 AI/로봇 등 신생 테마는 "
+    "당시 실제 인식과 다를 수 있음)",
+    "2020년 이전 백테스트는 현재까지 거래 중인 종목 기준이며, 당시 거래대금 상위였으나 "
+    "이후 상장폐지/합병된 종목은 포함되지 않음 (서바이버십 편향) — 실제 성과보다 "
+    "낙관적일 수 있음",
+]
 
 
 def _ym(d: date) -> int:
@@ -204,7 +224,7 @@ def _load(start: date, end: date, cols: list[str]) -> pd.DataFrame:
     select = ", ".join(cols)
     sql = f"""
         SELECT {select}
-        FROM   read_parquet('{_FDS}', hive_partitioning=true)
+        FROM   read_parquet({_FDS}, hive_partitioning=true)
         WHERE  yearmonth BETWEEN {_ym(start)} AND {_ym(end)}
           AND  date      BETWEEN '{start}' AND '{end}'
     """
@@ -264,17 +284,105 @@ def _kospi_cum_series(start: date, end: date, dates: list) -> pd.Series:
     return (s / s.iloc[0] - 1) * 100
 
 
-def _stock_cum_frame(start: date, end: date) -> tuple[pd.DataFrame, pd.Series, list]:
-    """종목별 일별 누적수익률(첫 등장일 종가 대비, %) 행렬 + 종목→테마(1차) 매핑.
+def _kospi_change_rate(start: date, end: date) -> pd.DataFrame:
+    """코스피 일별 등락률(change_rate, 전일 종가 대비 %) — 1거래일 폴백 전용."""
+    sql = f"""
+        SELECT date, change_rate
+        FROM   read_parquet('{_FKOSPI}', hive_partitioning=true)
+        WHERE  yearmonth BETWEEN {_ym(start)} AND {_ym(end)}
+          AND  date      BETWEEN '{start}' AND '{end}'
+        ORDER BY date
+    """
+    con = duckdb.connect()
+    try:
+        with timed_db_query():
+            df = con.execute(sql).fetchdf()
+    finally:
+        con.close()
+    df["date"] = pd.to_datetime(df["date"])
+    return df
+
+
+def _single_trading_day_theme_stats(start: date, end: date, dates: list) -> pd.DataFrame:
+    """1거래일 폴백 — 조회 범위 내 유효 등장종목(>=MIN_APPEAR_DAYS) 표본이 0개일 때
+    (start==end뿐 아니라, 나머지 날짜가 전부 휴장일이라 실거래일이 1일뿐인 경우도 포함)
+    사용. 시작가→종료가 비교가 정의 불가하므로, dominant_days와 동일한 theme1_pct
+    (테마(1차) 당일 등락률)를 cumret_pct로 사용한다.
+    appear_days=1, cumret_first/second(전반/후반)·rotation은 거래일 1개로는 정의
+    불가 → None 처리(프론트는 null을 '−'로 표시).
+    """
+    if not dates:
+        return pd.DataFrame()
+    last_date = pd.Timestamp(dates[-1])
+
+    theme_df = _load(start, end, ["date", "theme1", "theme1_amount", "theme1_pct"])
+    theme_df = theme_df.dropna(subset=["theme1"])
+    theme_df["date"] = pd.to_datetime(theme_df["date"])
+    day = theme_df[theme_df["date"] == last_date]
+    if day.empty:
+        return pd.DataFrame()
+    daily = day.groupby("theme1", as_index=False).agg(
+        theme1_amount=("theme1_amount", "max"),
+        theme1_pct=("theme1_pct", "max"),
+    )
+
+    stock_df = _load(start, end, ["date", "code", "name", "theme1", "change_pct"])
+    stock_df = stock_df.dropna(subset=["theme1"])
+    stock_df["date"] = pd.to_datetime(stock_df["date"])
+    stock_day = stock_df[stock_df["date"] == last_date]
+    up_ratio = stock_day.groupby("theme1")["change_pct"].apply(lambda s: float((s > 0).mean()))
+    name_map = stock_day.dropna(subset=["name"]).groupby("code")["name"].last()
+
+    jump_pct = (PRICE_JUMP_RATIO - 1) * 100  # 등락률 기준 ±300%(PRICE_JUMP_RATIO=4.0) 가드
+
+    top_codes, top_names, top_rets, top_stocks_col = [], [], [], []
+    for theme, day_pct in zip(daily["theme1"], daily["theme1_pct"]):
+        stock_final = stock_day.loc[stock_day["theme1"] == theme].set_index("code")["change_pct"].dropna()
+        stock_final = stock_final[stock_final.abs() < jump_pct]
+        top3 = _pick_top_stocks(stock_final, day_pct, n=3)
+        top_codes.append(top3[0][0] if top3 else None)
+        top_names.append(name_map.get(top3[0][0]) if top3 else None)
+        top_rets.append(round(top3[0][1], 2) if top3 else None)
+        top_stocks_col.append([
+            {"code": c, "name": name_map.get(c), "cumret_pct": round(r, 2)} for c, r in top3
+        ])
+
+    return pd.DataFrame(dict(
+        theme1        = daily["theme1"],
+        appear_days   = 1,
+        cumret_pct    = daily["theme1_pct"].round(2),
+        cumret_first  = None,
+        cumret_second = None,
+        total_amount  = daily["theme1_amount"].round(0),
+        up_ratio      = daily["theme1"].map(up_ratio).fillna(0.0).round(3),
+        rotation      = None,
+        top_stock_code        = top_codes,
+        top_stock_name        = top_names,
+        top_stock_cumret_pct  = top_rets,
+        top_stocks            = top_stocks_col,
+    ))
+
+
+PRICE_JUMP_RATIO = 4.0  # ±300% 등락률 가드: 전일 대비 4배 이상 상승 또는 1/4 이하로 하락
+# (병합/분할 등 수정주가 미반영 단절 의심 — fact_daily_stock은 거래대금 TR(당일 스냅샷)
+# 기반이라 수정주가 개념이 없어 원시 가격이 그대로 들어간다. 2026-06-19 발견: 신성이엔지
+# (011930) 10:1 액면병합 신주상장으로 04-23 3,995원→05-15 39,950원 단절 — 트리맵 '테마 내
+# 1위 종목'에 +1550% 비현실적 수익률로 노출됐었음. 근본 해결(과거 병합/분할 비율 소급
+# 조정)은 전체 데이터 검증 부담이 커서, 우선 이 가드로 노출만 차단한다.)
+
+
+def _stock_cum_frame(start: date, end: date) -> tuple[pd.DataFrame, pd.Series, list, pd.Series, set]:
+    """종목별 일별 누적수익률(첫 등장일 종가 대비, %) 행렬 + 종목→테마(1차)/종목명 매핑
+    + 가격단절(병합/분할 추정) 종목 코드 집합.
 
     - 등장하지 않은 날은 직전 종가를 carry-forward
     - 등장일수 < MIN_APPEAR_DAYS 종목은 시작가/종료가 비교가 불가하므로 제외
     """
-    df = _load(start, end, ["date", "code", "theme1", "close_price"])
+    df = _load(start, end, ["date", "code", "name", "theme1", "close_price"])
     df["date"] = pd.to_datetime(df["date"])
     dates = sorted(df["date"].unique())
     if not dates:
-        return pd.DataFrame(), pd.Series(dtype=object), dates
+        return pd.DataFrame(), pd.Series(dtype=object), dates, pd.Series(dtype=object), set()
 
     counts = df.groupby("code")["date"].nunique()
     valid_codes = counts[counts >= MIN_APPEAR_DAYS].index
@@ -284,12 +392,94 @@ def _stock_cum_frame(start: date, end: date) -> tuple[pd.DataFrame, pd.Series, l
         df[df["theme1"].notna() & (df["theme1"] != "")]
         .groupby("code")["theme1"].agg(lambda s: s.mode().iloc[0])
     )
+    name_map = df.dropna(subset=["name"]).groupby("code")["name"].last()
 
     piv  = df.pivot_table(index="date", columns="code", values="close_price", aggfunc="last").reindex(dates)
     piv  = piv.ffill()
     base = piv.bfill().iloc[0]
     cum  = (piv.div(base) - 1) * 100  # 첫 등장일 이전은 NaN
-    return cum, theme_map, dates
+
+    day_ratio = piv / piv.shift(1)
+    jump_mask = (day_ratio >= PRICE_JUMP_RATIO) | (day_ratio <= 1 / PRICE_JUMP_RATIO)
+    jump_codes = set(jump_mask.columns[jump_mask.any()])
+
+    return cum, theme_map, dates, name_map, jump_codes
+
+
+def _load_dim_theme() -> pd.DataFrame:
+    """code -> theme1/name 현재 매핑 (2020년 이전 구간 소급 적용용)."""
+    return pd.read_parquet(_DIM_THEME, columns=["code", "name", "theme1"])
+
+
+def _stock_cum_frame_ohlcv(start: date, end: date) -> tuple[pd.DataFrame, pd.Series, list, pd.Series, set]:
+    """`_stock_cum_frame()`의 2020년 이전 전용 대체본 — fact_daily_stock 대신
+    market_ohlcv(2015~2019 백필분) 종가 + dim_theme(현재 테마 매핑)을 종목코드로
+    조인해 동일한 (cum, theme_map, dates, name_map, jump_codes) 형태를 만든다.
+    테마 자체를 새로 분류하지 않고 현재 매핑을 그대로 재사용한다(사용자 지시).
+    """
+    sql = f"""
+        SELECT date, code, close
+        FROM   read_parquet('{_FOHLCV}', hive_partitioning=true)
+        WHERE  date BETWEEN '{start}' AND '{end}'
+    """
+    con = duckdb.connect()
+    try:
+        with timed_db_query():
+            df = con.execute(sql).fetchdf()
+    finally:
+        con.close()
+    df["date"] = pd.to_datetime(df["date"])
+    dates = sorted(df["date"].unique())
+    if not dates:
+        return pd.DataFrame(), pd.Series(dtype=object), dates, pd.Series(dtype=object), set()
+
+    dim = _load_dim_theme()
+    df = df.merge(dim, on="code", how="inner")
+
+    counts = df.groupby("code")["date"].nunique()
+    valid_codes = counts[counts >= MIN_APPEAR_DAYS].index
+    df = df[df["code"].isin(valid_codes)]
+    if df.empty:
+        return pd.DataFrame(), pd.Series(dtype=object), dates, pd.Series(dtype=object), set()
+
+    theme_map = df.groupby("code")["theme1"].agg(lambda s: s.mode().iloc[0])
+    name_map  = df.dropna(subset=["name"]).groupby("code")["name"].last()
+
+    piv  = df.pivot_table(index="date", columns="code", values="close", aggfunc="last").reindex(dates)
+    piv  = piv.ffill()
+    base = piv.bfill().iloc[0]
+    cum  = (piv.div(base) - 1) * 100
+
+    day_ratio = piv / piv.shift(1)
+    jump_mask = (day_ratio >= PRICE_JUMP_RATIO) | (day_ratio <= 1 / PRICE_JUMP_RATIO)
+    jump_codes = set(jump_mask.columns[jump_mask.any()])
+
+    return cum, theme_map, dates, name_map, jump_codes
+
+
+def _theme_amount_from_ohlcv(start: date, end: date) -> tuple[pd.Series, pd.Series]:
+    """`api_period_themes()`의 거래대금/등장일수 — 2020년 이전 전용. market_ohlcv의
+    종목별 일별 amount(거래대금)를 dim_theme의 theme1으로 묶어 합산한다."""
+    sql = f"""
+        SELECT date, code, amount
+        FROM   read_parquet('{_FOHLCV}', hive_partitioning=true)
+        WHERE  date BETWEEN '{start}' AND '{end}'
+    """
+    con = duckdb.connect()
+    try:
+        with timed_db_query():
+            df = con.execute(sql).fetchdf()
+    finally:
+        con.close()
+    if df.empty:
+        return pd.Series(dtype=float), pd.Series(dtype=int)
+
+    dim = _load_dim_theme()
+    df = df.merge(dim[["code", "theme1"]], on="code", how="inner")
+    daily_amt = df.groupby(["date", "theme1"], as_index=False)["amount"].sum()
+    total_amount = daily_amt.groupby("theme1")["amount"].sum()
+    appear_days  = daily_amt.groupby("theme1")["date"].nunique()
+    return total_amount, appear_days
 
 
 def _theme_cum_series(cum: pd.DataFrame, theme_map: pd.Series) -> pd.DataFrame:
@@ -315,24 +505,41 @@ def api_period_themes(start: date, end: date) -> dict[str, Any]:
     누적상승율 = 테마에 속한 각 종목의 (기간 시작일 종가 대비 종료일 종가) 등락률을
     단순평균한 값. cumret_first/second는 같은 기준을 전반부/후반부로 나눠 계산.
     """
-    cum, theme_map, dates = _stock_cum_frame(start, end)
+    use_ohlcv   = end < FACT_DAILY_STOCK_MIN_DATE     # 데이터 소스 라우팅 (전체 기간이 2020년 이전일 때만)
+    show_notice = start < FACT_DAILY_STOCK_MIN_DATE   # 안내문구 노출 (2020년 이전이 일부라도 포함되면)
+    if use_ohlcv:
+        cum, theme_map, dates, name_map, jump_codes = _stock_cum_frame_ohlcv(start, end)
+    else:
+        cum, theme_map, dates, name_map, jump_codes = _stock_cum_frame(start, end)
     if cum.empty or theme_map.empty:
-        return dict(rising=[], falling=[], rotating=[], all=[])
+        if use_ohlcv:
+            return dict(rising=[], falling=[], rotating=[], all=[], notice=PRE2020_NOTICE)
+        r = _single_trading_day_theme_stats(start, end, dates)
+        result = _assemble_period_themes(r, rotating_supported=False)
+        if show_notice:
+            result["notice"] = PRE2020_NOTICE
+        return result
 
     theme_cum = _theme_cum_series(cum, theme_map)
     if theme_cum.empty:
-        return dict(rising=[], falling=[], rotating=[], all=[])
+        result = dict(rising=[], falling=[], rotating=[], all=[])
+        if show_notice:
+            result["notice"] = PRE2020_NOTICE
+        return result
 
     final = theme_cum.iloc[-1]
     mid_i = len(dates) // 2 - 1 if len(dates) >= 2 else 0
     mid   = theme_cum.iloc[mid_i]
 
-    # 거래대금/등장일수: 기존 (date, theme1) dedup 합산 방식 유지
-    amt_df = _load(start, end, ["date", "theme1", "theme1_amount"])
-    amt_df = amt_df.dropna(subset=["theme1"])
-    daily_amt = amt_df.groupby(["date", "theme1"], as_index=False)["theme1_amount"].max()
-    total_amount = daily_amt.groupby("theme1")["theme1_amount"].sum()
-    appear_days  = daily_amt.groupby("theme1")["date"].nunique()
+    if use_ohlcv:
+        total_amount, appear_days = _theme_amount_from_ohlcv(start, end)
+    else:
+        # 거래대금/등장일수: 기존 (date, theme1) dedup 합산 방식 유지
+        amt_df = _load(start, end, ["date", "theme1", "theme1_amount"])
+        amt_df = amt_df.dropna(subset=["theme1"])
+        daily_amt = amt_df.groupby(["date", "theme1"], as_index=False)["theme1_amount"].max()
+        total_amount = daily_amt.groupby("theme1")["theme1_amount"].sum()
+        appear_days  = daily_amt.groupby("theme1")["date"].nunique()
 
     rows = []
     for theme in theme_cum.columns:
@@ -340,16 +547,37 @@ def api_period_themes(start: date, end: date) -> dict[str, Any]:
         cr = float(final[theme])
         cf = float(mid[theme])
         cs = ((1 + cr / 100) / (1 + cf / 100) - 1) * 100 if (1 + cf / 100) != 0 else 0.0
-        up = float((cum[codes].iloc[-1].dropna() > 0).mean()) if codes else 0.0
+        stock_final = cum[codes].iloc[-1].dropna() if codes else pd.Series(dtype=float)
+        up = float((stock_final > 0).mean()) if not stock_final.empty else 0.0
+        top_candidates = stock_final.drop(labels=[c for c in jump_codes if c in stock_final.index])
+        top3 = _pick_top_stocks(top_candidates, cr, n=3)
+        top_code, top_ret = (top3[0] if top3 else (None, None))
         rows.append(dict(
             theme1=theme,
             appear_days=int(appear_days.get(theme, 0)),
             cumret_pct=round(cr, 2), cumret_first=round(cf, 2), cumret_second=round(cs, 2),
             total_amount=round(float(total_amount.get(theme, 0.0)), 0),
             up_ratio=round(up, 3), rotation=round(cs - cf, 2),
+            top_stock_code=top_code,
+            top_stock_name=name_map.get(top_code) if top_code else None,
+            top_stock_cumret_pct=round(top_ret, 2) if top_ret is not None else None,
+            top_stocks=[
+                {"code": c, "name": name_map.get(c), "cumret_pct": round(r, 2)} for c, r in top3
+            ],
         ))
 
-    r = pd.DataFrame(rows)
+    result = _assemble_period_themes(pd.DataFrame(rows), rotating_supported=True)
+    if show_notice:
+        result["notice"] = PRE2020_NOTICE
+    return result
+
+
+def _assemble_period_themes(r: pd.DataFrame, rotating_supported: bool) -> dict[str, Any]:
+    """composite/fall_score 산출 + TOP10 정렬 — 정상 경로/1거래일 폴백 공통.
+
+    rotating_supported=False면 rotation(전반↔후반 변화)이 정의되지 않는 폴백
+    케이스이므로 rotating은 항상 빈 배열로 반환한다.
+    """
     if r.empty:
         return dict(rising=[], falling=[], rotating=[], all=[])
 
@@ -369,7 +597,9 @@ def api_period_themes(start: date, end: date) -> dict[str, Any]:
 
     keep = ["theme1", "appear_days", "cumret_pct", "cumret_first",
             "cumret_second", "total_amount", "up_ratio",
-            "composite", "rotation", "fall_score"]
+            "composite", "rotation", "fall_score",
+            "top_stock_code", "top_stock_name", "top_stock_cumret_pct", "top_stocks"]
+    keep = [c for c in keep if c in r.columns]
 
     def top(df_: pd.DataFrame, col: str, n: int = 10, smallest: bool = False) -> list[dict]:
         df_ = df_.nsmallest(n, col) if smallest else df_.nlargest(n, col)
@@ -378,9 +608,29 @@ def api_period_themes(start: date, end: date) -> dict[str, Any]:
     return dict(
         rising   = top(r, "cumret_pct"),
         falling  = top(r[fm], "cumret_pct", 10, smallest=True) if fm.any() else [],
-        rotating = top(r, "rotation"),
+        rotating = top(r, "rotation") if rotating_supported else [],
         all      = _clean(r[keep].replace({np.nan: None}).to_dict("records")),
     )
+
+
+def _pick_top_stock(stock_final: pd.Series, theme_cumret_pct: float) -> tuple[Optional[str], Optional[float]]:
+    """테마 내 '1위 종목' 선정 — 테마 자체가 상승(cumret_pct>=0)이면 최고 수익률 종목,
+    하락이면 최저(가장 많이 떨어진) 종목 1개. 압도적 테마 종목/강세주도 이벤트의
+    까다로운 조건(3지표 동시 1위, 기여점수≥7)과 무관하게 항상 존재하는 값이어야
+    트리맵 타일(테마가 있으면 항상 그려짐) 호버 정보가 빈틈없이 채워진다."""
+    top3 = _pick_top_stocks(stock_final, theme_cumret_pct, n=1)
+    if not top3:
+        return None, None
+    return top3[0]
+
+
+def _pick_top_stocks(stock_final: pd.Series, theme_cumret_pct: float, n: int = 3) -> list[tuple[str, float]]:
+    """테마 내 상위(또는 하락 테마면 최하위) 종목 N개 선정 — _pick_top_stock과 동일한
+    상승/하락 기준이되, 트리맵 호버 카드에 1~3위를 함께 보여주기 위해 N개를 반환한다."""
+    if stock_final.empty:
+        return []
+    ordered = stock_final.sort_values(ascending=theme_cumret_pct < 0)
+    return [(code, float(ret)) for code, ret in ordered.head(n).items()]
 
 
 def api_period_theme_trend(start: date, end: date, top: int = 20) -> dict[str, Any]:
@@ -391,27 +641,76 @@ def api_period_theme_trend(start: date, end: date, top: int = 20) -> dict[str, A
     kospi = 코스피지수 종가의 시작일 대비 누적수익률(%) — 같은 기간 내 비교 기준선.
     정렬 = 누적상승율(cumret_pct) 내림차순 (api_period_themes와 동일 기준).
     """
-    cum, theme_map, dates = _stock_cum_frame(start, end)
+    use_ohlcv   = end < FACT_DAILY_STOCK_MIN_DATE
+    show_notice = start < FACT_DAILY_STOCK_MIN_DATE
+    if use_ohlcv:
+        cum, theme_map, dates, _name_map, _jump_codes = _stock_cum_frame_ohlcv(start, end)
+    else:
+        cum, theme_map, dates, _name_map, _jump_codes = _stock_cum_frame(start, end)
     if cum.empty or theme_map.empty:
-        return dict(dates=[], series=[], kospi=[])
+        if use_ohlcv:
+            return dict(dates=[], series=[], kospi=[], notice=PRE2020_NOTICE)
+        result = _theme_trend_single_day_fallback(start, end, dates, top)
+        if show_notice:
+            result["notice"] = PRE2020_NOTICE
+        return result
 
     theme_cum = _theme_cum_series(cum, theme_map)
     if theme_cum.empty:
-        return dict(dates=[], series=[], kospi=[])
+        result = dict(dates=[], series=[], kospi=[])
+        if show_notice:
+            result["notice"] = PRE2020_NOTICE
+        return result
 
     final = theme_cum.iloc[-1]
     top_themes = list(final.nlargest(top).index)
 
+    # 코스피 베이스라인: fact_kospi 2014-07-25~ 백필 완료(2026-06-21)로 2015년 이후는
+    # 정상 조회 가능 — 소스 분기 없이 항상 같은 함수 사용
     kospi_cum = _kospi_cum_series(start, end, dates)
 
     series = [
         dict(theme1=t, cum=[round(float(v), 2) for v in theme_cum[t]])
         for t in top_themes
     ]
-    return dict(
+    result = dict(
         dates =[pd.Timestamp(d).strftime("%Y-%m-%d") for d in dates],
         series=series,
         kospi =[round(float(v), 2) for v in kospi_cum],
+    )
+    if show_notice:
+        result["notice"] = PRE2020_NOTICE
+    return result
+
+
+def _theme_trend_single_day_fallback(start: date, end: date, dates: list, top: int) -> dict[str, Any]:
+    """api_period_themes의 1거래일 폴백과 동일 조건. 거래일이 1개뿐이라 '추이'는
+    단일 포인트만 존재 — series의 cum은 그 날의 theme1_pct(당일 등락률) 1개값,
+    kospi도 같은 날 change_rate(전일 종가 대비 %) 1개값을 사용한다.
+    """
+    if not dates:
+        return dict(dates=[], series=[], kospi=[])
+    last_date = pd.Timestamp(dates[-1])
+
+    theme_df = _load(start, end, ["date", "theme1", "theme1_pct"])
+    theme_df = theme_df.dropna(subset=["theme1"])
+    theme_df["date"] = pd.to_datetime(theme_df["date"])
+    day = theme_df[theme_df["date"] == last_date]
+    if day.empty:
+        return dict(dates=[], series=[], kospi=[])
+
+    daily = day.groupby("theme1", as_index=False)["theme1_pct"].max()
+    daily = daily.nlargest(top, "theme1_pct")
+
+    kospi_df = _kospi_change_rate(start, end)
+    kospi_today = kospi_df.loc[kospi_df["date"] == last_date, "change_rate"]
+    kospi_val = float(kospi_today.iloc[0]) if not kospi_today.empty else 0.0
+
+    return dict(
+        dates =[last_date.strftime("%Y-%m-%d")],
+        series=[dict(theme1=row.theme1, cum=[round(float(row.theme1_pct), 2)])
+                for row in daily.itertuples()],
+        kospi =[round(kospi_val, 2)],
     )
 
 
@@ -546,11 +845,10 @@ def api_period_leaders(start: date, end: date) -> dict[str, Any]:
     df = df.sort_values("date")
 
     # 누적수익률 = 종목의 (기간 시작일 또는 첫 등장일 종가 대비 종료일 종가) 등락률
-    cum, _theme_map, _dates = _stock_cum_frame(start, end)
+    cum, _theme_map, _dates, _name_map, _jump_codes = _stock_cum_frame(start, end)
 
     dates      = sorted(df["date"].unique())
     total_days = len(dates)
-    mid        = dates[len(dates) // 2 - 1] if len(dates) >= 2 else dates[0]
 
     df["theme_n"]  = df.groupby(["date", "theme1"])["code"].transform("count")
     df["rank_pct"] = np.where(
@@ -572,10 +870,16 @@ def api_period_leaders(start: date, end: date) -> dict[str, Any]:
         if recent3 < 3:
             continue
 
-        rp1 = g.loc[g["date"] <= mid, "rank_pct"].mean()
-        rp2 = g.loc[g["date"] >  mid, "rank_pct"].mean()
-        mom = (0.0 if np.isnan(rp2) else float(rp2)) - \
-              (0.0 if np.isnan(rp1) else float(rp1))
+        # 순위모멘텀: 조회기간의 절대 중간날짜(mid) 기준 전/후반 분리 방식은 같은 종목의
+        # 같은 원자료라도 조회 기간(start/end)에 따라 mid가 달라져 momentum 부호 자체가
+        # 뒤집히는 버그가 있었음(2026-06-19 발견 — 미래에셋생명 3개월 조회 momentum=1.0
+        # vs 06-08~06-18 조회 momentum=0.0). 외부 기준점 대신 그 종목 자신의 "연속 등장일
+        # 사이" rank_pct 증감만 비교하도록 교체 — 조회 구간을 좁혀도 잘리는 건 양끝
+        # 비교쌍뿐이라 결과가 일관됨.
+        rank_seq = g["rank_pct"].tolist()
+        ups   = sum(1 for i in range(1, n) if rank_seq[i] > rank_seq[i - 1])
+        downs = sum(1 for i in range(1, n) if rank_seq[i] < rank_seq[i - 1])
+        mom = (ups - downs) / (n - 1) if n > 1 else 0.0
         if mom <= 0:
             continue
 

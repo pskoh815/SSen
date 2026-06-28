@@ -34,12 +34,12 @@ import duckdb
 import numpy as np
 import pandas as pd
 
-from .period_analysis import _clean
+from .period_analysis import _clean, _load_kospi
 from .perf_timer import timed_db_query
 from .supertrend_strategy import (
     _FOHLCV, _supertrend, _add_52w_high, _add_usaf_signal, _empty_summary, _summarize,
     HIGH52W_WINDOW, NEAR_HIGH_PCT, BREAKOUT_WINDOW, NARROW_BODY_PCT,
-    ST_PERIOD,
+    ST_PERIOD, MARKET_EMA_PERIODS,
 )
 
 RS_WINDOWS      = {20: 0.10, 60: 0.30, 120: 0.20, 250: 0.40}  # 기간별 가중치
@@ -124,6 +124,19 @@ def api_rs_breakout_trades(start: date, end: date) -> dict[str, Any]:
     amount = df.pivot(index="date", columns="code", values="amount").sort_index()
     rs = _compute_rs(close)
 
+    # ── 시장 국면 필터: 코스피 종가 > EMA(20) AND > EMA(60)일 때만 매수(N일) 허용
+    # (2026-06-25 A/B 테스트로 추가 — supertrend_strategy.py와 동일 필터. 10년 백테스트
+    # 기준 10년 복리 +3,179%→+6,164%, 최악 연간 MDD -75.5%→-40.6%로 개선 확인.
+    # "코스피 자체 52주 신고가+추세지속" 필터도 시도했으나 너무 보수적이라(충족일 46.8%)
+    # 상승장 수익을 과도하게 깎아먹어(+685%) 기각 — EMA20/60이 더 우수함)
+    kospi = _load_kospi(load_start, load_end)
+    kospi["date"] = kospi["date"].dt.date
+    kospi_s = kospi.set_index("date")["close"].reindex(close.index).ffill().bfill()
+    market_uptrend = pd.Series(True, index=kospi_s.index)
+    for period in MARKET_EMA_PERIODS:
+        kospi_ema = kospi_s.ewm(span=period, adjust=False).mean()
+        market_uptrend &= kospi_s > kospi_ema
+
     # RS≥85일 이후 AMOUNT_LOOKAHEAD거래일 이내(당일 포함) 거래대금 최댓값
     amt_fwd_max = amount[::-1].rolling(AMOUNT_LOOKAHEAD, min_periods=1).max()[::-1]
     qualify = (rs >= RS_MIN) & (amt_fwd_max >= AMOUNT_THRESHOLD)
@@ -161,6 +174,7 @@ def api_rs_breakout_trades(start: date, end: date) -> dict[str, Any]:
         sma20 = g["sma20"].values
         signal_strong = g["signal_strong"].values
         rs_code = rs[code].reindex(trading_dates).values if code in rs.columns else np.full(n, np.nan)
+        market_ok = market_uptrend.reindex(trading_dates, fill_value=False).to_numpy()
 
         cursor = q_idx
         while cursor < n:
@@ -185,6 +199,8 @@ def api_rs_breakout_trades(start: date, end: date) -> dict[str, Any]:
                 o = open_arr[ni]
                 body_pct = abs(close_arr[ni] - o) / o * 100 if o else None
                 if body_pct is None or body_pct >= NARROW_BODY_PCT:
+                    continue
+                if not market_ok[ni]:   # 시장 국면 필터: 코스피가 EMA20/60 위일 때만 매수 허용
                     continue
                 n_idx = ni
                 break

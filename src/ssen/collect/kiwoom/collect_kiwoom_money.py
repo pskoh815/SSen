@@ -23,10 +23,16 @@ from pathlib import Path
 import pandas as pd
 from pykiwoom.kiwoom import Kiwoom
 
+from _watchdog import Watchdog  # 4개 키움 수집 스크립트 공용 (같은 디렉터리)
+
 # ── 설정 ──────────────────────────────────────────────────────────────
 OUTPUT_DIR = Path(r"C:\MyClaude\ssen-dashboard\data\incoming\kiwoom")
 TOP_N = 300                     # 시장별 수집 종목 수 (data.go.kr MostActiveStocks와 맞춤)
 MARKETS = {"001": "KOSPI", "101": "KOSDAQ"}
+# 이 시간 동안 진행 없으면 행(hang)으로 간주, 강제 종료 (2026-06-17 중복로그인 행 실측,
+# 2026-06-18 daily_collect 인코딩 크래시 연쇄실패 계기로 money/kospi/adr에도 통일 적용).
+# 이 스크립트는 시장 2개 × 1회 호출이라 60초면 충분한 여유.
+WATCHDOG_TIMEOUT_SEC = 60
 
 # ETF/ETN 브랜드 키워드 (종목명 기반 1차 필터, 운용사 신규 브랜드 추가 시 갱신 필요)
 ETF_BRAND_PATTERN = re.compile(
@@ -112,8 +118,12 @@ def collect_market(kiwoom: Kiwoom, market_code: str, market_name: str) -> pd.Dat
 def main():
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    watchdog = Watchdog(WATCHDOG_TIMEOUT_SEC)
+    watchdog.reset()  # CommConnect 자체가 멈추는 경우(중복 로그인 팝업 등)도 대비
+
     kiwoom = Kiwoom()
     kiwoom.CommConnect(block=True)
+    watchdog.reset()
     if kiwoom.GetConnectState() != 1:
         print("[오류] 키움 OpenAPI 로그인 실패 — AUTO 로그인 설정을 확인하세요")
         sys.exit(1)
@@ -122,8 +132,10 @@ def main():
     frames = []
     for code, name in MARKETS.items():
         frames.append(collect_market(kiwoom, code, name))
+        watchdog.reset()
         time.sleep(1)  # TR 호출 제한(초당 5회) 회피용 여유
 
+    watchdog.stop()
     result = pd.concat(frames, ignore_index=True)
     if result.empty:
         print("[오류] 수집 결과가 비어있음 — 전체 중단 없이 종료 (CLAUDE.md 에러 정책)")

@@ -613,7 +613,21 @@ def run(target_dates: Optional[list[date]] = None, prefer_kiwoom: bool = True,
     merged_adr = _upsert(_load_existing_adr_months(yms), new_adr, ["날짜", "지수"])
     theme_df = load_theme_df()
 
-    # ── 5. incoming xlsx 빌드 + ingest (E1→E2→E3→캐시무효화→archive) ───────────
+    # ── 5. OHLCV: universe(거래대금 상위 1년 누적) 키움 갱신 + data.go.kr 전종목 백스톱 ──
+    # dataset_version을 갱신하는 6번(ingest)보다 반드시 먼저 실행한다. 역순으로 두면
+    # dataset_version이 먼저 바뀌고 market_ohlcv는 한참 뒤(키움 OHLCV는 universe
+    # 전체 호출에 수분~수십분 소요)에야 채워지는데, 그 사이 창에서 RS 계산(market_ohlcv
+    # 기준)이 새 dataset_version으로 캐시되면 그날 종가가 빠진 RS가 다음날까지
+    # 영구 캐시되는 회귀가 있었음(2026-06-19 발견: leader-events/dominant-top-stocks의
+    # 당일 RS점수가 전부 결측으로 캐시됨). compute_ohlcv_universe()가 직전일까지의
+    # fact_daily_stock으로 universe를 정하는 부작용은 있으나(당일 신규 상위종목 1일
+    # 지연 — 다음날 자연 보완), RS 캐시 영구 오염보다 훨씬 가벼운 trade-off.
+    print("\nOHLCV 갱신...")
+    ohlcv_result = run_ohlcv_update(end_date=max(target_dates), prefer_kiwoom=prefer_kiwoom)
+    print(f"  {ohlcv_result}")
+    run_ohlcv_datagokr_backstop(start=min(target_dates), end=max(target_dates))
+
+    # ── 6. incoming xlsx 빌드 + ingest (E1→E2→E3→캐시무효화→archive) ───────────
     incoming_path = INCOMING_DIR / f"daily_update_{datetime.now().strftime('%Y%m%dT%H%M%S')}.xlsx"
     build_incoming_workbook(merged_stock, merged_kospi, merged_adr, theme_df, incoming_path)
     print(f"incoming workbook 생성: {incoming_path}")
@@ -624,12 +638,6 @@ def run(target_dates: Optional[list[date]] = None, prefer_kiwoom: bool = True,
         overlap="rebuild", skip_e3=skip_e3,
     )
     result["target_dates"] = [str(d) for d in target_dates]
-
-    # ── 6. OHLCV: universe(거래대금 상위 1년 누적) 키움 갱신 + data.go.kr 전종목 백스톱 ──
-    print("\nOHLCV 갱신...")
-    ohlcv_result = run_ohlcv_update(end_date=max(target_dates), prefer_kiwoom=prefer_kiwoom)
-    print(f"  {ohlcv_result}")
-    run_ohlcv_datagokr_backstop(start=min(target_dates), end=max(target_dates))
     result["ohlcv"] = ohlcv_result
 
     return result

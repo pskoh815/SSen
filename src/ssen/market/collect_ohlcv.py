@@ -167,6 +167,16 @@ def to_parquet(items: list[dict], ym: str, market: str) -> Path:
     out_dir  = MARKET_DIR / f"yearmonth={ym}" / market
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "data.parquet"
+    # 월 단위 파티션이라 부분 기간(예: 최근 며칠)만 수집해도 기존 파일을 그대로
+    # 덮어쓰면 같은 달의 나머지 날짜가 통째로 삭제된다(2026-06-25 실제 발생한 사고 —
+    # daily_update.py가 매일 narrow한 target_dates로 백스톱을 호출하는데, 예전엔 별도
+    # 수동 스크립트가 항상 전체 월 단위로 돌려서 드러나지 않았을 뿐). 기존 파일이 있으면
+    # (date, code) 기준 upsert(신규가 기존을 덮어씀)로 병합 후 저장 — idempotent 보장.
+    if out_file.exists():
+        existing = pd.read_parquet(out_file)
+        df = pd.concat([existing, df], ignore_index=True)
+        df = df.drop_duplicates(subset=["date", "code"], keep="last")
+        df = df.sort_values(["date", "code"]).reset_index(drop=True)
     df.to_parquet(out_file, index=False, compression="snappy")
     return out_file
 

@@ -7,262 +7,673 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  /* ═══ SSen Design System — StockInsight2 계열 (docs/design_system.md) ═══ */
+  /* ═══════════════════════════════════════════════════════════
+     SSen — Premium Fintech Dashboard · Green Edition
+     3-color system · glass depth · organic shapes · motion
+     ═══════════════════════════════════════════════════════════ */
   :root {
-    /* 표면 */
-    --bg-base:       #04111f;
-    --bg-panel:      #071a2e;
-    --bg-card:       #0a2240;
-    --bg-card-hover: #0d2b50;
-    --bg-input:      #061526;
-    /* 액센트 */
-    --accent1:       #3a9fd8;   /* 시그널 블루 */
-    --accent2:       #e05e30;   /* 시그널 오렌지 */
-    --accent-green:  #1fb87a;
-    --gold:          #e8b84b;
-    /* 한국 시장 관례: 상승=주황, 하락=청 */
-    --up:            #e05e30;
-    --dn:            #3a9fd8;
-    --neu:           #6b8499;
-    /* 라인/텍스트 */
-    --border:        rgba(58,159,216,.18);
-    --border-bright: rgba(58,159,216,.45);
-    --text-primary:  #ddeeff;
-    --text-secondary:#7fa8cc;
-    --text-muted:    #3d6080;
-    --glow1:         rgba(58,159,216,.25);
-    --glow2:         rgba(224,94,48,.25);
-    --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px;
+    /* ─ Navy-indigo accent system (그린은 헤더 배너·로고 전용) ─ */
+    --Seagull:        #3447A0;
+    --Seagull-bright: #6B82E0;
+    --Seagull-soft:   #E7E9F5;
+    --Seagull-deep:   #161F52;
+    --Indigo:      #111844;
+    --Indigo-mid:  #232F72;
+    --Indigo-soft: #4C5FC0;
+
+    --cream:       #EEF0F4;
+    --white:       #FFFFFF;
+
+    /* ─ Functional data tones (used sparingly in numbers/charts) ─
+       한국 시장 관례: 상승=빨강, 하락=파랑 — 캔들/카드 미니바 등 JS 하드코딩 색(#FF5A5F/#60A5FA)과
+       통일 */
+    --up:  #FF5A5F;
+    --dn:  #60A5FA;
+    --neu: #8A8F9E;
+    --accent2: #E5824A;
+
+    /* aliases kept for JS-driven inline styles & legacy refs */
+    --blue: #7FC0E6; --blue-dark: #7DC838; --blue-deeper: #111844; --blue-light: #EDF7E0;
+    --accent1: #8BAFD0; --accent-green: #16A34A; --gold: #D9A21B;
+    --bg-base: #EEF0F4; --bg-panel: #FFFFFF; --bg-card: #FFFFFF; --bg-card-hover: #F4F5F9; --bg-input: #F1F2F7;
+    --bg-stock-card: #FFFFFF;
+    --bg-kpi-card: #FFFFFF;
+    --bg-strength-box: #FFFFFF;
+    --border: rgba(17,24,68,0.07); --border-bright: rgba(17,24,68,0.12);
+    --text-primary: #111844; --text-secondary: #585F7A; --text-muted: #8A8F9E;
+    --glow1: rgba(52,71,160,0.22); --glow2: rgba(255,90,95,0.16);
+
+    /* ─ Glass shadows ─ */
+    --sh-soft:  0 2px 8px rgba(17,24,68,.05), 0 8px 24px rgba(17,24,68,.06);
+    --sh-float: 0 4px 14px rgba(17,24,68,.06), 0 18px 44px rgba(17,24,68,.09);
+    --sh-hover: 0 10px 24px rgba(17,24,68,.09), 0 28px 64px rgba(17,24,68,.14);
+    --sh-lime:  0 8px 28px rgba(52,71,160,.30);
+    --sh-forest:0 8px 26px rgba(17,24,68,.22);
+
+    --radius-sm: 14px; --radius-md: 20px; --radius-lg: 26px;
+
+    /* ─ Spacing scale (4px base) ─ */
+    --space-1: 4px;  --space-2: 8px;  --space-3: 12px; --space-4: 16px;
+    --space-5: 20px; --space-6: 24px; --space-7: 32px; --space-8: 40px;
+    --space-9: 48px; --space-10: 64px;
+
+    /* ─ Type scale (ratio 1.25) ─ */
+    --text-xs: 11px; --text-sm: 13px; --text-base: 15px;
+    --text-lg: 18px; --text-xl: 22px; --text-2xl: 28px;
+
+    /* ─ Motion ─ */
+    --ease: cubic-bezier(.16,1,.3,1);
+  }
+  :root.dark {
+    --Indigo:      #141c33;
+    --Indigo-mid:  #232F72;
+    --Indigo-soft: #A9B8F2;
+    --cream:       #F5F5F5;
+    --white:       #0C2840;;
+    --bg-base: #232F72; --bg-panel: #E9EAF0; --bg-card: #E9EAF0; --bg-card-hover: #E2E4ED; --bg-input: #E2E4ED;
+    --bg-stock-card: #EDEEF3;
+    --bg-kpi-card: #E9EAF0;
+    --bg-strength-box: #E2E5EF;
+    --border: rgba(17,24,68,0.08); --border-bright: rgba(255,255,255,0.14);
+    --text-primary: #EAF0FA; --text-secondary: #AEB6D6; --text-muted: #7A8099;
+    --sh-soft:  0 2px 8px rgba(0,0,0,.30), 0 8px 24px rgba(0,0,0,.30);
+    --sh-float: 0 4px 14px rgba(0,0,0,.32), 0 18px 44px rgba(0,0,0,.35);
+    --sh-hover: 0 10px 24px rgba(0,0,0,.36), 0 28px 64px rgba(0,0,0,.40);
+  }
+  :root.dark body {
+    background: var(--cream);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
   body {
-    background: var(--bg-base);
+    background: var(--cream);
     color: var(--text-primary);
-    font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    font-family: 'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif;
     font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
-  a { color: var(--accent1); }
+  a { color: var(--Indigo-soft); text-decoration: none; }
 
-  .app { max-width: 1400px; margin: 0 auto; padding: 16px; }
+  ::selection { background: var(--Seagull); color: var(--Indigo); }
 
-  /* ── Header ── */
+  /* ─ Accessibility: keyboard focus ─ */
+  :focus-visible { outline: 2px solid var(--Seagull-deep); outline-offset: 2px; border-radius: 4px; }
+
+  /* ─ Dark mode toggle ─ */
+  .dark-toggle {
+    border: none; background: rgba(17,24,68,.08); color: var(--Indigo);
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    font-size: 14px; display: inline-flex; align-items: center; justify-content: center;
+    transition: background .2s var(--ease), transform .2s var(--ease);
+  }
+  .dark-toggle:hover { background: rgba(17,24,68,.16); transform: rotate(15deg); }
+  :root.dark .dark-toggle { background: rgba(255,255,255,.08); color: var(--Seagull-bright); }
+
+  /* ─ Loading skeleton ─ */
+  .skeleton { position: relative; overflow: hidden; background: var(--bg-input); border-radius: var(--radius-sm); }
+  .skeleton::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(52,71,160,.14) 50%, transparent 70%);
+    animation: skeletonShine 1.4s ease-in-out infinite;
+  }
+  @keyframes skeletonShine { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .skeleton::after { animation: none; } }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-thumb { background: rgba(17,24,68,.14); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(17,24,68,.26); background-clip: padding-box; border: 3px solid transparent; }
+
+  .app { max-width: 1380px; margin: 0 auto; padding: 0 0 60px; }
+
+  /* ─────────── Animations ─────────── */
+  @keyframes fadeUp { from { opacity:0; transform: translateY(18px); } to { opacity:1; transform:none; } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes floatBlob { 0%,100% { transform: translate(0,0) rotate(0deg); } 50% { transform: translate(-14px,12px) rotate(12deg); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+  @keyframes riseIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:none; } }
+
+  /* ═══════════ HEADER + CONTROLS — 하나의 배경(greenbg.png)으로 통합 ═══════════ */
+  .header-block {
+    position: relative; overflow: hidden;
+    margin: 22px 22px 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: url('greenbg.png') center bottom / cover no-repeat,
+                linear-gradient(125deg, #8FDC3E 0%, #7FC0E6 32%, #A8E4F5 62%, #CDF58F 100%);
+    animation: fadeUp .6s cubic-bezier(.16,1,.3,1) both;
+  }
   .header {
+    position: relative;
     display: flex; justify-content: space-between; align-items: center;
-    padding: 14px 18px; background: var(--bg-panel);
-    border: 1px dashed var(--border-bright); border-radius: var(--radius-lg);
-    margin-bottom: 12px; flex-wrap: wrap; gap: 12px;
+    flex-wrap: wrap; gap: 16px;
+    padding: 34px 40px 30px;
+    background: transparent;
+    box-shadow: none;
+  }
+  /* organic swirl objects */
+  .header::before {
+    content:''; position:absolute; right:-70px; top:-120px;
+    width: 360px; height: 360px;
+    background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.34), rgba(255,255,255,0) 62%);
+    border-radius: 47% 53% 60% 40% / 45% 50% 50% 55%;
+    pointer-events:none; animation: floatBlob 14s ease-in-out infinite;
+  }
+  .header::after {
+    content:''; position:absolute; right:120px; bottom:-140px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(255,255,255,.18), rgba(255,255,255,0) 60%);
+    border-radius: 50%;
+    pointer-events:none; animation: floatBlob 18s ease-in-out infinite reverse;
   }
   .header h1 {
-    font-size: 1.15rem; font-weight: 700; letter-spacing: -.02em;
-    color: var(--text-primary); display: flex; align-items: center; gap: 9px;
+    position: relative; z-index: 1;
+    font-size: 1.72rem; font-weight: 900; letter-spacing: -.035em;
+    color: var(--Indigo); display: flex; align-items: center; gap: 15px;
   }
-  .header h1 .dot {
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent1); box-shadow: 0 0 8px var(--accent1);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.4;} }
-  .meta-badge { display: flex; gap: 18px; font-size: 11.5px; color: var(--text-muted); }
-  .meta-badge span { display: flex; flex-direction: column; }
-  .meta-badge .val { color: var(--text-primary); font-weight: 600; margin-top: 2px; }
-  .meta-badge .fresh { color: var(--accent-green); }
+  .header h1 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--Indigo); opacity: .65; animation: pulse 2.4s infinite; }
+  .meta-badge { position: relative; z-index: 1; display: flex; gap: 30px; font-size: 11px; }
+  .meta-badge span { display: flex; flex-direction: column; gap: 3px; }
+  .meta-badge small { color: var(--Indigo-mid); opacity: .72; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; font-size: 9.5px; }
+  .meta-badge .val { color: var(--Indigo); font-weight: 800; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .meta-badge .fresh { color: var(--Indigo); }
 
-  /* ── Controls ── */
+  /* ═══════════ CONTROLS ═══════════ */
   .controls {
-    display: flex; gap: 10px; align-items: center; padding: 12px 16px;
-    background: var(--bg-panel); border: 1px dashed var(--border-bright);
-    border-radius: var(--radius-lg); margin-bottom: 12px; flex-wrap: wrap;
+    position: relative;
+    display: flex; gap: 9px; align-items: center; flex-wrap: wrap;
+    padding: 14px 28px;
+    margin: 0;
+    border-radius: 0;
+    background: transparent;
+    border: none; box-shadow: none;
   }
-  .controls label { color: var(--text-secondary); font-size: 12px; margin-right: 4px; }
+  .controls label { color: #111844; font-size: 11.5px; font-weight: 700; margin-right: 2px; }
   .controls input[type=date] {
-    background: var(--bg-input); border: 1px solid var(--border);
-    color: var(--text-primary); padding: 6px 10px;
-    border-radius: var(--radius-sm); font-size: 13px;
-    color-scheme: dark;
+    background: rgba(255,255,255,.55); border: 1px solid rgba(17,24,68,.18);
+    color: #111844; padding: 7px 11px; font-weight: 600;
+    border-radius: 10px; font-size: 13px; color-scheme: light;
+    transition: border-color .18s, box-shadow .18s;
   }
-  .controls input[type=date]:focus { outline: none; border-color: var(--accent1); box-shadow: 0 0 0 3px var(--glow1); }
-  .btn { padding: 7px 14px; border-radius: var(--radius-sm); border: none; cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; font-family: inherit; }
-  .btn-primary { background: var(--accent1); color: #fff; box-shadow: 0 0 12px var(--glow1); }
-  .btn-primary:hover { background: #4db0e8; }
-  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
-  .btn-ghost:hover { border-color: var(--border-bright); color: var(--text-primary); }
-  #year-select { color-scheme: dark; }
-  #year-select option { background: var(--bg-card); color: var(--text-primary); }
-  .shortcuts { display: flex; gap: 6px; }
+  .controls input[type=date]:focus { outline: none; border-color: #111844; box-shadow: 0 0 0 3px rgba(17,24,68,.12); }
+  .btn {
+    padding: 8px 16px; border-radius: 11px; border: none; cursor: pointer;
+    font-size: 12.5px; font-weight: 700; font-family: inherit;
+    transition: transform .18s cubic-bezier(.16,1,.3,1), box-shadow .18s, background .18s;
+  }
+  .btn-primary { background: #111844; color: #A8E4F5; box-shadow: var(--sh-forest); }
+  .btn-primary:hover { background: #031410; transform: translateY(-2px); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { background: rgba(255,255,255,.45); border: 1px solid rgba(17,24,68,.18); color: #111844; }
+  .btn-ghost:hover { background: rgba(255,255,255,.65); transform: translateY(-1px); }
+  #year-select { color-scheme: light; background: rgba(255,255,255,.45); border: 1px solid rgba(17,24,68,.18); color: #111844; cursor: pointer; }
+  #year-select option { background: #fff; color: #111844; }
+  .shortcuts { display: flex; gap: 6px; flex-wrap: wrap; }
 
-  /* ── Tabs ── */
-  .tab-nav { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  /* ═══════════ TABS ═══════════ */
+  .tab-nav {
+    display: flex; gap: 10px; margin: 0 22px 0; padding: 13px 18px 18px;
+    border: none; border-radius: 0 0 20px 20px;
+    background: #111844;
+    box-shadow: 0 10px 28px rgba(17,24,68,.18);
+  }
   .tab-btn {
-    padding: 9px 20px; background: none; border: none; color: var(--text-muted);
-    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
-    border-bottom: 2px solid transparent; margin-bottom: -1px;
-    transition: color .15s, border-color .15s;
+    padding: var(--space-2) var(--space-6); border: none; cursor: pointer; font-family: inherit;
+    font-size: var(--text-sm); font-weight: 500; letter-spacing: -.01em;
+    border-radius: 50px; background: var(--cream); color: var(--text-secondary);
+    transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s, background .2s, color .2s;
   }
-  .tab-btn:hover { color: var(--text-primary); }
-  .tab-btn.active { color: var(--accent1); border-bottom-color: var(--accent1); text-shadow: 0 0 12px var(--glow1); }
+  .tab-btn:hover { background: var(--Seagull-soft); color: var(--Indigo); transform: translateY(-1px); }
+  .tab-btn.active {
+    background: #F2B50F; color: #111844;
+    font-weight: 700;
+    box-shadow: 0 8px 22px rgba(242,181,15,.40);
+  }
   .tab-panel { display: none; }
-  .tab-panel.active { display: block; }
+  .tab-panel.active { display: block; padding: 18px 22px 0; animation: fadeIn .4s ease both; }
 
-  /* ── Summary cards ── */
-  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 12px; }
-  @media (max-width: 900px) { .cards { grid-template-columns: repeat(2, 1fr); } }
+  /* ═══════════ KPI CARDS ═══════════ */
+  .cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 22px; }
+  @media (max-width:1000px) { .cards { grid-template-columns: repeat(2,1fr); } }
   .card {
-    background: var(--bg-card); border: 1px dashed var(--border-bright);
-    border-radius: var(--radius-md); padding: 14px 16px;
-    transition: background .15s, border-color .15s;
+    position: relative; overflow: hidden;
+    background: var(--bg-kpi-card); border: none;
+    border-radius: var(--radius-md); padding: 16px 22px;
+    box-shadow: var(--sh-float);
+    transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s;
+    animation: fadeUp .55s cubic-bezier(.16,1,.3,1) both;
   }
-  .card:hover { background: var(--bg-card-hover); box-shadow: 0 0 10px var(--glow1); }
-  .card .label { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-  .card .value { font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
-  .card .sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
-  .pos { color: var(--up); } .neg { color: var(--dn); } .neu { color: var(--gold); }
+  .cards .card:nth-child(1){animation-delay:.04s} .cards .card:nth-child(2){animation-delay:.09s}
+  .cards .card:nth-child(3){animation-delay:.14s} .cards .card:nth-child(4){animation-delay:.19s}
+  .cards .card:nth-child(5){animation-delay:.24s}
+  .card::before {
+    content:''; position:absolute; right:-36px; bottom:-46px;
+    width: 130px; height: 130px; border-radius: 50%;
+    pointer-events:none; transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  .card:hover { transform: translateY(-6px); box-shadow: var(--sh-hover); }
+  .card:hover::before { transform: scale(1.5) translate(-12px,-12px); }
+  .card .label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .9px; font-weight: 700; margin-bottom: 6px; }
+  .card .value { font-size: 1.6rem; font-weight: 800; letter-spacing: -.04em; color: var(--Indigo); font-variant-numeric: tabular-nums; line-height: 1; }
+  .card .sub { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; font-weight: 500; }
+  /* hero card */
+  .cards .card:nth-child(4) {
+    background: #FFFFFF;
+    border: 2px solid #111844;
+    box-shadow: var(--sh-float);
+  }
+  .cards .card:nth-child(4)::before { right:-30px; top:-40px; bottom:auto; width:150px; height:150px; }
+  .cards .card:nth-child(4)::after { display: none; }
+  .cards .card:nth-child(4) .label { color: #8BAFD0; opacity: 1; }
+  .cards .card:nth-child(4) .value { font-size: 1.7rem; color: #111844; }
+  .cards .card:nth-child(4) .sub { color: var(--text-muted); }
+  /* 누적수익률 카드: 값의 부호에 따라 배경/테두리를 주황(상승)·청(하락) 톤으로 */
+  .cards .card:nth-child(4):has(.value.pos) { background: rgba(224,94,48,.06); border-color: rgba(224,94,48,.45); }
+  .cards .card:nth-child(4):has(.value.neg) { background: rgba(96,165,250,.06); border-color: rgba(96,165,250,.45); }
+  /* .pos/.neg/.neu가 .card .value(클래스 2개)보다 우선순위가 낮아 무시되던 버그 수정
+     — 동일 specificity 이상으로 명시해 KPI 카드 색상 강조가 실제로 적용되게 함 */
+  .pos { color: var(--up); } .neg { color: var(--dn); } .neu { color: var(--neu); }
+  .card .value.pos { color: var(--up); }
+  .card .value.neg { color: var(--dn); }
+  .card .value.neu { color: var(--neu); }
 
-  /* ── Section ── */
-  .section { background: var(--bg-panel); border: 1px dashed var(--border-bright); border-radius: var(--radius-lg); margin-bottom: 12px; overflow: hidden; }
-  .section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-  .section-header h2 { font-size: 14px; font-weight: 600; }
-  .section-body { padding: 16px; }
+  /* ═══════════ SECTION ═══════════ */
+  .section {
+    position: relative; overflow: hidden;
+    background: var(--white); border: none;
+    border-radius: var(--radius-lg); margin-bottom: 22px;
+    box-shadow: var(--sh-float);
+    animation: fadeUp .55s cubic-bezier(.16,1,.3,1) both;
+  }
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    padding: 22px 28px 18px; background: var(--white); border-bottom: 1px solid var(--border);
+  }
+  .section-header > h2 { position: relative; padding-left: 16px; }
+  .section-header > h2::before {
+    content:''; position:absolute; left:0; top:50%; transform: translateY(-50%);
+    width: 5px; height: 22px; border-radius: 4px;
+    background: linear-gradient(180deg, var(--Seagull), var(--Seagull-deep));
+  }
+  .section-header h2 { font-size: 17px; font-weight: 800; letter-spacing: -.02em; color: var(--Indigo); }
+  .section-header span, .section-header small { color: var(--text-muted) !important; font-size: 12px; font-weight: 500; }
+  .section-header--Seagull { background: #EEF0F4; }
+  .section-body { padding: 24px 28px; }
   .sec-hint {
-    font-size: 11.5px; color: var(--text-secondary); margin-bottom: 10px;
-    padding: 7px 12px; background: rgba(58,159,216,.07);
-    border-left: 2px solid var(--accent1);
-    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 12px; color: var(--Indigo-mid); margin-bottom: 16px; line-height: 1.6;
+    padding: 12px 16px; background: var(--bg-card-hover);
+    border-left: 3px solid var(--Seagull-deep);
+    border-radius: 4px 14px 14px 4px;
   }
 
-  /* ── 테마 칩 (테마 추이) ── */
-  .theme-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  /* ═══════════ THEME CHIPS ═══════════ */
+  .theme-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
   .chip {
-    padding: 4px 12px; border-radius: 20px; font-size: 11.5px; font-weight: 500;
-    cursor: pointer; border: 1px solid var(--border);
-    background: var(--bg-panel); color: var(--text-secondary); transition: all .15s;
+    padding: 7px 16px; border-radius: 30px; font-size: 12px; font-weight: 600;
+    cursor: pointer; border: 1.5px solid var(--border-bright);
+    background: var(--white); color: var(--text-secondary);
+    transition: all .18s cubic-bezier(.16,1,.3,1);
   }
-  .chip:hover { border-color: var(--border-bright); color: var(--text-primary); }
-  .chip.sel { color: #fff; font-weight: 700; }
-  .trend-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
-  .tleg-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); }
-  .tleg-line { width: 18px; height: 3px; border-radius: 2px; }
+  .chip:hover { border-color: var(--Seagull-deep); color: var(--Indigo); transform: translateY(-2px); box-shadow: var(--sh-soft); }
+  .chip.sel { background: linear-gradient(120deg, var(--Seagull), var(--Seagull-bright)); color: var(--Indigo); border-color: transparent; font-weight: 800; box-shadow: var(--sh-lime); }
+  .trend-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+  .tleg-item { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: var(--text-secondary); font-weight: 500; }
+  .tleg-line { width: 20px; height: 3px; border-radius: 3px; }
 
-  /* ── Timeline ── */
-  #timeline-container { overflow-x: auto; padding-bottom: 8px; }
+  /* ═══════════ TIMELINE ═══════════ */
+  #timeline-container { overflow-x: auto; padding-bottom: 10px; }
   #timeline-wrap { min-width: 900px; }
-  .tl-axis { display: flex; justify-content: space-between; font-size: 10px; color: var(--text-muted); margin-top: 4px; }
-  .tl-track { height: 36px; background: var(--bg-input); border-radius: var(--radius-sm); position: relative; overflow: hidden; }
-  .tl-bar { position: absolute; height: 100%; display: flex; align-items: center; padding: 0 6px; font-size: 10px; font-weight: 600; color: #fff; cursor: pointer; transition: opacity .1s; border-radius: 2px; white-space: nowrap; overflow: hidden; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-  .tl-bar:hover { opacity: .8; z-index: 10; }
-  .tl-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-  .tl-legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); }
-  .tl-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .tl-axis { display: flex; justify-content: space-between; font-size: 10.5px; color: var(--text-muted); margin-top: 8px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .tl-track {
+    height: 52px; background: var(--cream);
+    border: none; border-radius: 16px; position: relative; overflow: hidden;
+    box-shadow: inset 0 2px 6px rgba(17,24,68,.06);
+  }
+  .tl-bar {
+    position: absolute; height: 100%; display: flex; align-items: center;
+    padding: 0 13px; font-size: 11.5px; font-weight: 800; color: #fff;
+    cursor: pointer; border-radius: 12px; white-space: nowrap; overflow: hidden;
+    text-shadow: 0 1px 3px rgba(0,0,0,.3);
+    box-shadow: 0 4px 14px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.2);
+    transition: transform .2s cubic-bezier(.16,1,.3,1), filter .2s;
+  }
+  .tl-bar:hover { filter: brightness(1.1) saturate(1.1); transform: translateY(-2px) scale(1.01); z-index: 10; }
+  .tl-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+  .tl-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-secondary); font-weight: 500; }
+  .tl-legend-dot { width: 11px; height: 11px; border-radius: 4px; }
 
-  /* ── Table ── */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; }
-  th { padding: 8px 12px; text-align: left; font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap; }
-  th:hover { color: var(--text-primary); }
-  th .sort-icon { margin-left: 4px; opacity: .4; }
-  th.sorted .sort-icon { opacity: 1; color: var(--accent1); }
-  td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; white-space: nowrap; }
+  /* ═══════════ TABLE ═══════════ */
+  .table-wrap { overflow-x: auto; margin: 0 -4px; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; }
+  th {
+    padding: 13px 16px; text-align: left; font-size: 10.5px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px;
+    border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; white-space: nowrap;
+    background: transparent;
+  }
+  th:hover { color: var(--Indigo-soft); }
+  th .sort-icon { margin-left: 5px; opacity: .35; }
+  th.sorted .sort-icon { opacity: 1; color: var(--Seagull-deep); }
+  td {
+    padding: 14px 16px; border-bottom: 1px solid var(--border);
+    font-size: 13.5px; white-space: nowrap; color: var(--Indigo);
+    font-variant-numeric: tabular-nums; font-weight: 500;
+  }
   tr:last-child td { border-bottom: none; }
-  tr.selected td { background: rgba(58,159,216,.12); }
-  tr:hover td { background: rgba(58,159,216,.05); cursor: pointer; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-  .badge-green { background: rgba(31,184,122,.15); color: var(--accent-green); }
-  .badge-red { background: rgba(224,94,48,.15); color: var(--accent2); }
-  .badge-yellow { background: rgba(232,184,75,.15); color: var(--gold); }
-  .badge-blue { background: rgba(58,159,216,.15); color: var(--accent1); }
+  tbody tr { transition: background .16s; border-radius: 12px; }
+  tr.selected td { background: rgba(52,71,160,.10); }
+  tr:hover td { background: rgba(52,71,160,.06); cursor: pointer; }
+  :root.dark th { color: var(--text-secondary); }
+  :root.dark td { color: var(--text-primary); }
+  :root.dark th.sorted .sort-icon { color: var(--Seagull-bright); }
+  :root.dark tr.selected td { background: rgba(107,130,224,.30); }
+  :root.dark tr:hover td { background: rgba(107,130,224,.18); }
+  .badge { display: inline-block; padding: 4px 11px; border-radius: 30px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: rgba(22,163,74,.12); color: #15803D; }
+  .badge-red { background: rgba(229,72,77,.12); color: #C2363B; }
+  .badge-yellow { background: rgba(217,162,27,.14); color: #A87A0E; }
+  .badge-blue { background: rgba(52,71,160,.12); color: #2C4A9E; }
+  :root.dark .badge-green { background: rgba(34,197,94,.20); color: #6EE7A8; }
+  :root.dark .badge-red { background: rgba(248,113,113,.20); color: #FCA5A5; }
+  :root.dark .badge-yellow { background: rgba(250,204,21,.20); color: #FDE68A; }
+  :root.dark .badge-blue { background: rgba(169,184,242,.20); color: #C9D4F7; }
+  /* chart-box--strength는 다크모드에서도 밝은 카드 배경(--bg-strength-box)을 쓰므로
+     위 다크모드 텍스트/배지 색(밝은 배경 가정)을 라이트모드 색으로 되돌림 */
+  :root.dark .chart-box--strength th { color: #8A8F9E; }
+  :root.dark .chart-box--strength td { color: #111844; }
+  :root.dark .chart-box--strength .badge-green { background: rgba(22,163,74,.12); color: #15803D; }
+  :root.dark .chart-box--strength .badge-red { background: rgba(229,72,77,.12); color: #C2363B; }
+  :root.dark .chart-box--strength .badge-yellow { background: rgba(217,162,27,.14); color: #A87A0E; }
+  :root.dark .chart-box--strength .badge-blue { background: rgba(52,71,160,.12); color: #2C4A9E; }
 
-  /* ── Explain panel ── */
-  .explain-grid { display: grid; grid-template-columns: 0.8fr 0.8fr 1.4fr; gap: 16px; }
-  @media (max-width: 1100px) { .explain-grid { grid-template-columns: 1fr; } }
-  .explain-block { background: var(--bg-card); border: 1px dashed var(--border-bright); border-radius: var(--radius-md); padding: 14px; }
-  .explain-block h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
-  .explain-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  /* ═══════════ EXPLAIN PANEL ═══════════ */
+  .explain-grid { display: grid; grid-template-columns: .8fr .8fr 1.4fr; gap: 18px; }
+  @media (max-width:1100px) { .explain-grid { grid-template-columns: 1fr; } }
+  .explain-block { background: var(--cream); border: none; border-radius: var(--radius-md); padding: 20px; box-shadow: inset 0 1px 0 rgba(255,255,255,.6); }
+  .explain-block h3 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; margin-bottom: 14px; }
+  .explain-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--Indigo); }
   .explain-row:last-child { border: none; }
   .explain-key { color: var(--text-secondary); }
-  .rationale-text { font-size: 13px; line-height: 1.7; color: var(--text-primary); background: var(--bg-card); border: 1px dashed var(--border-bright); border-radius: var(--radius-md); padding: 14px; }
-  .explain-chart { margin-top: 16px; }
-  .rationale-text .step { margin-bottom: 8px; display: flex; gap: 8px; }
-  .rationale-text .step-num { background: var(--accent1); color: #fff; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 2px; box-shadow: 0 0 6px var(--glow1); }
+  :root.dark .explain-block h3 { color: #8A8F9E; }
+  :root.dark .explain-row { color: #111844; }
+  :root.dark .explain-key { color: #585F7A; }
+  .rationale-text { font-size: 13.5px; line-height: 1.8; color: var(--Indigo); background: var(--cream); border: none; border-radius: var(--radius-md); padding: 20px; }
+  .explain-chart { margin-top: 18px; }
+  .rationale-text .step { margin-bottom: 12px; display: flex; gap: 12px; }
+  .rationale-text .step-num { background: linear-gradient(135deg, var(--Seagull), var(--Seagull-deep)); color: var(--Indigo); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; flex-shrink: 0; margin-top: 1px; box-shadow: var(--sh-soft); }
 
-  /* ── Filter bar ── */
-  .filter-bar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  /* ═══════════ FILTER BAR ═══════════ */
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
   .filter-bar input, .filter-bar select {
-    background: var(--bg-input); border: 1px solid var(--border); color: var(--text-primary);
-    padding: 5px 10px; border-radius: var(--radius-sm); font-size: 12px; font-family: inherit;
+    background: var(--bg-input); border: 1.5px solid var(--border-bright); color: var(--Indigo);
+    padding: 9px 14px; border-radius: 12px; font-size: 12.5px; font-family: inherit; font-weight: 500;
+    transition: border-color .18s, box-shadow .18s;
   }
-  .filter-bar input { width: 160px; }
-  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent1); }
-  .filter-count { font-size: 12px; color: var(--text-muted); }
+  .filter-bar input { width: 200px; }
+  .filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--Seagull-deep); box-shadow: 0 0 0 4px var(--glow1); }
+  .filter-count { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 
-  /* ── Period analysis ── */
-  .period-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  .period-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
-  @media (max-width: 900px) { .period-grid2, .period-grid3 { grid-template-columns: 1fr; } }
-  .chart-box { background: var(--bg-panel); border: 1px dashed var(--border-bright); border-radius: var(--radius-lg); padding: 16px; }
-  .chart-box h3 { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text-primary); }
-  .chart-box .sub-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+  /* ═══════════ PERIOD ANALYSIS ═══════════ */
+  .period-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  .period-grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+  @media (max-width:1000px) { .period-grid2, .period-grid3 { grid-template-columns: 1fr; } }
+  .chart-box {
+    position: relative; overflow: hidden;
+    background: var(--white); border: none; border-radius: var(--radius-lg); padding: 24px;
+    box-shadow: var(--sh-float);
+    transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s;
+  }
+  .chart-box:hover { transform: translateY(-4px); box-shadow: var(--sh-hover); }
+  .chart-box--strength { background: var(--bg-strength-box); }
+  .chart-box h3 { font-size: 14px; font-weight: 800; margin-bottom: 16px; color: var(--Indigo); letter-spacing: -.01em; }
+  .chart-box h3.top-rule { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+  .chart-box .sub-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-weight: 500; }
   .chart-container { position: relative; }
 
-  /* ── Coverage gauge ── */
-  .cov-bar { display: inline-block; width: 60px; height: 8px; background: rgba(58,159,216,.12); border-radius: 4px; vertical-align: middle; overflow: hidden; }
-  .cov-fill { height: 100%; background: var(--accent1); border-radius: 4px; box-shadow: 0 0 4px var(--glow1); }
+  /* ═══════════ COVERAGE GAUGE ═══════════ */
+  .cov-bar { display: inline-block; width: 64px; height: 7px; background: rgba(17,24,68,.08); border-radius: 4px; vertical-align: middle; overflow: hidden; }
+  .cov-fill { height: 100%; background: linear-gradient(90deg, var(--Seagull-deep), var(--Seagull)); border-radius: 4px; }
 
-  /* ── State ── */
-  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-muted); gap: 10px; }
-  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent1); border-radius: 50%; animation: spin .8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .empty { text-align: center; padding: 40px; color: var(--text-muted); }
-  .error { color: var(--accent2); padding: 12px 16px; background: rgba(224,94,48,.08); border: 1px solid rgba(224,94,48,.25); border-radius: var(--radius-sm); margin: 12px 0; }
-  .placeholder { text-align: center; padding: 40px; color: var(--text-muted); }
-  .placeholder .icon { font-size: 32px; margin-bottom: 8px; }
+  /* ═══════════ STATES ═══════════ */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 56px; color: var(--text-muted); gap: 14px; font-weight: 500; }
+  .spinner { width: 24px; height: 24px; border: 3px solid rgba(125,200,56,.18); border-top-color: var(--Seagull-deep); border-radius: 50%; animation: spin .7s linear infinite; }
+  .empty { text-align: center; padding: 56px; color: var(--text-muted); font-weight: 500; }
+  .error { color: #C2363B; padding: 14px 18px; background: rgba(229,72,77,.07); border: 1px solid rgba(229,72,77,.16); border-radius: 14px; margin: 14px 0; font-weight: 500; }
+  .placeholder { text-align: center; padding: 56px; color: var(--text-muted); font-weight: 500; }
+  .placeholder .icon { font-size: 38px; margin-bottom: 12px; }
 
-  /* ── Treemap ── */
-  .treemap-wrap { position: relative; width: 100%; height: 300px; background: var(--bg-input); border-radius: var(--radius-sm); overflow: hidden; }
-  .tm-cell { position: absolute; box-sizing: border-box; border: 1px solid rgba(4,17,31,.55); overflow: hidden; cursor: pointer; transition: filter .12s; }
-  .tm-cell:hover { filter: brightness(1.25); z-index: 10; }
-  .tm-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4px; text-align: center; pointer-events: none; }
-  .tm-name { font-weight: 700; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.9); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
-  .tm-ret  { margin-top: 2px; font-weight: 600; color: rgba(255,255,255,.92); text-shadow: 0 1px 2px rgba(0,0,0,.8); }
-  .tm-tooltip { position: fixed; background: rgba(7,26,46,.97); border: 1px solid var(--border-bright); border-radius: var(--radius-md); padding: 12px 16px; font-size: 13px; pointer-events: none; z-index: 9999; min-width: 195px; box-shadow: 0 8px 32px rgba(0,0,0,.65); display: none; }
-  .tm-tooltip .tt-title { font-weight: 700; font-size: 15px; margin-bottom: 10px; color: var(--text-primary); border-bottom: 1px solid var(--border); padding-bottom: 8px; }
-  .tm-tooltip .tt-row { display: flex; justify-content: space-between; gap: 20px; padding: 4px 0; }
-  .tm-tooltip .tt-key { color: var(--text-muted); }
-  .tm-tooltip .tt-val { color: var(--text-primary); font-weight: 600; }
+  /* ═══════════ TREEMAP ═══════════ */
+  .treemap-wrap { position: relative; width: 100%; height: 320px; background: var(--cream); border-radius: var(--radius-md); overflow: hidden; box-shadow: inset 0 2px 8px rgba(17,24,68,.05); }
+  .tm-cell { position: absolute; box-sizing: border-box; border: 1px solid rgba(17,24,68,.35); border-radius: 2px; overflow: hidden; cursor: pointer; transition: transform .16s, filter .16s; }
+  .tm-cell:hover { filter: brightness(1.08); transform: scale(.98); z-index: 10; }
+  .tm-inner { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; text-align: center; pointer-events: none; }
+  .tm-name { font-weight: 800; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,.5); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+  .tm-ret { margin-top: 3px; font-weight: 800; color: rgba(255,255,255,.96); text-shadow: 0 1px 3px rgba(0,0,0,.45); font-variant-numeric: tabular-nums; }
+  .tm-tooltip {
+    position: fixed; background: var(--white); border: none;
+    border-radius: 18px; padding: 18px 22px; font-size: 13px;
+    pointer-events: none; z-index: 9999; min-width: 220px;
+    box-shadow: 0 16px 50px rgba(17,24,68,.16), 0 6px 16px rgba(17,24,68,.08);
+    display: none;
+  }
+  .tm-tooltip .tt-title { font-weight: 800; font-size: 15px; margin-bottom: 14px; color: var(--text-primary); border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+  .tm-tooltip .tt-row { display: flex; justify-content: space-between; gap: 22px; padding: 5px 0; }
+  .tm-tooltip .tt-key { color: var(--text-secondary); }
+  .tm-tooltip .tt-val { color: var(--text-primary); font-weight: 700; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
+  .tm-tooltip .tt-row-sep { border-top: 1px solid var(--border); margin-top: 8px; padding-top: 12px; }
 
   @media (prefers-reduced-motion: reduce) {
-    .header h1 .dot { animation: none; }
-    .spinner { animation-duration: 1.6s; }
+    *, .header::before, .header::after { animation: none !important; }
   }
+
+  /* ═══════════ LOGO ═══════════ */
+  .brand-logo { display:inline-flex; align-items:center; transition: transform .25s cubic-bezier(.16,1,.3,1), filter .25s; }
+  .brand-logo:hover { transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 6px 14px rgba(17,24,68,.28)); }
+  .brand-name b { color: var(--Indigo); font-weight: 900; }
+
+  /* ═══════════ STRATEGY SWITCHER ═══════════ */
+  .strat-switch { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:22px; }
+  .strat-btn {
+    flex:1; min-width:190px; display:flex; flex-direction:column; align-items:flex-start; gap:6px;
+    padding:18px 20px; border-radius: var(--radius-md); border:none;
+    background:var(--white); color:var(--text-secondary); cursor:pointer; font-family:inherit;
+    text-align:left; box-shadow:var(--sh-soft);
+    transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s, background .25s;
+  }
+  .strat-btn:hover { transform: translateY(-4px); box-shadow:var(--sh-float); color:var(--Indigo); }
+  :root.dark .strat-btn:hover { color: var(--text-primary); }
+  .strat-btn.active {
+    background: #FFFFFF;
+    border: 2px solid #111844;
+    color: #111844;
+    box-shadow: 0 0 0 1px #111844, var(--sh-float); transform: translateY(-2px);
+  }
+  .strat-btn.active .strat-btn-stat { color: var(--text-secondary); }
+  .strat-btn .sb-name { font-size:13.5px; font-weight:800; letter-spacing:-.01em; }
+  .strat-btn-stat { font-size:12.5px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text-muted); }
+  .strat-panel { display:none; }
+  .strat-panel.active { display:block; animation:riseIn .3s cubic-bezier(.16,1,.3,1) both; }
+  .strat-toolbar { display:flex; justify-content:flex-end; margin-bottom:12px; }
+  .mini-toggle {
+    padding:8px 16px; border-radius:12px; border:1.5px solid var(--border-bright);
+    background:var(--white); color:var(--text-secondary); font-size:12px; font-weight:700;
+    cursor:pointer; font-family:inherit; margin-top:12px; box-shadow:var(--sh-soft);
+    transition: all .18s;
+  }
+  .strat-toolbar .mini-toggle { margin-top:0; }
+  .mini-toggle:hover { border-color:var(--Seagull-deep); color:var(--Indigo); transform: translateY(-1px); }
+  .mini-toggle.open { border-color:var(--Seagull-deep); color:var(--Indigo); background:rgba(52,71,160,.1); }
+  :root.dark .mini-toggle:hover, :root.dark .mini-toggle.open { color: var(--text-primary); }
+  .cond-text { margin-bottom:16px; }
+
+  /* ═══════════ METRIC CARDS ═══════════ */
+  .strat-metrics { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; margin-bottom:22px; }
+  @media (max-width:1000px) { .strat-metrics { grid-template-columns:repeat(2,1fr); } }
+  .metric {
+    position:relative; overflow:hidden; padding:20px; border-radius: var(--radius-md);
+    background:var(--bg-kpi-card); border:none; display:flex; flex-direction:column; gap:6px;
+    box-shadow:var(--sh-float);
+    transition: transform .3s cubic-bezier(.16,1,.3,1), box-shadow .3s;
+  }
+  .metric::before {
+    content:''; position:absolute; right:-30px; bottom:-40px; width:110px; height:110px; border-radius:50%;
+    background: rgba(52,71,160,.10); pointer-events:none;
+    transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  .metric:hover { transform:translateY(-5px); box-shadow:var(--sh-hover); }
+  .metric:hover::before { transform: scale(1.5) translate(-10px,-10px); }
+  .metric .m-label { font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted); font-weight:700; }
+  .metric .value { font-size:1.65rem; font-weight:800; letter-spacing:-.03em; color:var(--Indigo); font-variant-numeric:tabular-nums; }
+  .metric .m-sub { font-size:11px; color:var(--text-muted); font-weight:500; }
+  .metric.hero {
+    background: #F0FBE8;
+    border: 2px solid #111844;
+    box-shadow: var(--sh-float);
+  }
+  .metric.hero::before { background: rgba(17,24,68,.06); }
+  .metric.hero .m-label { color: #8BAFD0; opacity: 1; }
+  .metric.hero .value { font-size: 1.8rem; color: #111844; }
+  .metric.hero .m-sub { color: var(--text-muted); }
+
+  /* ═══════════ STOCK CARDS ═══════════ */
+  .stock-strip { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:16px; }
+  .strip-empty { grid-column:1/-1; text-align:center; color:var(--text-muted); padding:36px; font-size:13px; font-weight:500; }
+  .strip-more { grid-column:1/-1; text-align:center; color:var(--text-muted); font-size:12px; padding-top:8px; font-weight:600; }
+  .stock-card {
+    position:relative; overflow:hidden; padding:18px; border-radius: var(--radius-md);
+    background:var(--bg-stock-card); border:none; cursor:pointer; box-shadow:var(--sh-soft);
+    transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .25s;
+  }
+  .stock-card::before {
+    content:''; position:absolute; right:-28px; top:-34px; width:96px; height:96px; border-radius:50%;
+    background: rgba(52,71,160,.10); pointer-events:none;
+    transition: transform .4s cubic-bezier(.16,1,.3,1);
+  }
+  .stock-card:hover { transform:translateY(-6px); box-shadow:var(--sh-hover); }
+  .stock-card:hover::before { transform: scale(1.5); }
+  .sc-top { display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:14px; position:relative; z-index:1; }
+  .sc-name { font-size:14px; font-weight:800; color:var(--Indigo); letter-spacing:-.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sc-pnl { font-size:16px; font-weight:800; font-variant-numeric:tabular-nums; letter-spacing:-.02em; flex-shrink:0; }
+  .sc-bar { height:5px; border-radius:4px; background:var(--cream); overflow:hidden; margin-bottom:14px; position:relative; z-index:1; }
+  .sc-bar-fill { height:100%; border-radius:4px; }
+  .sc-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; position:relative; z-index:1; }
+  .sc-date { font-size:10.5px; color:var(--text-muted); font-variant-numeric:tabular-nums; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .sc-reason { font-size:10px; font-weight:800; padding:3px 10px; border-radius:30px; flex-shrink:0; white-space:nowrap; }
+  .sc-reason.rs-green { background:rgba(22,163,74,.12); color:#15803D; }
+  .sc-reason.rs-blue { background:rgba(52,71,160,.12); color:#2C4A9E; }
+  .sc-reason.rs-yellow { background:rgba(217,162,27,.14); color:#A87A0E; }
+  .sc-reason.rs-red { background:rgba(229,72,77,.12); color:#C2363B; }
+  .sc-count { font-size:10px; font-weight:700; color:#2C4A9E; background:rgba(52,71,160,.10); border-radius:30px; padding:2px 8px; margin-left:4px; vertical-align:middle; }
+  .sc-occ-list { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:10px; position:relative; z-index:1; }
+  .sc-occ-chip { font-size:10px; font-weight:600; color:var(--text-secondary); background:var(--cream); border-radius:20px; padding:3px 9px; white-space:nowrap; font-variant-numeric:tabular-nums; transition: background .15s, color .15s; }
+  .sc-occ-chip:hover { background:var(--Seagull-soft); color:var(--Indigo); }
+
+  /* ═══════════ MODAL ═══════════ */
+  #stock-chart-modal { position:fixed; inset:0; z-index:9998; display:none; align-items:center; justify-content:center; padding:28px; }
+  #stock-chart-modal.open { display:flex; }
+  .modal-backdrop { position:absolute; inset:0; background:rgba(17,24,68,.42); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); animation: fadeIn .3s ease; }
+  .modal-card {
+    position:relative; width:min(840px,100%); max-height:90vh; overflow-y:auto;
+    background:var(--white); border:none; border-radius:28px; padding:30px;
+    box-shadow:0 30px 80px rgba(17,24,68,.28);
+    animation:riseIn .35s cubic-bezier(.16,1,.3,1) both;
+  }
+  .modal-close {
+    position:absolute; top:20px; right:20px; width:38px; height:38px;
+    border-radius:50%; border:none; background:var(--cream); color:var(--text-secondary);
+    font-size:15px; cursor:pointer; transition:all .18s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .modal-close:hover { background:rgba(229,72,77,.12); color:#C2363B; transform: rotate(90deg); }
+  .modal-head { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; padding-right:48px; margin-bottom:20px; }
+  .msh-name { font-size:24px; font-weight:900; color:var(--Indigo); letter-spacing:-.035em; }
+  .msh-code { font-size:13px; color:var(--text-muted); font-weight:600; }
+  .msh-strat { font-size:12px; color:var(--Indigo-soft); margin-top:5px; font-weight:700; }
+  .msh-pnl { font-size:30px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.03em; flex-shrink:0; }
+  .modal-stats { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px; }
+  .ms-item { display:flex; flex-direction:column; gap:4px; padding:12px 16px; border-radius:14px; background:var(--cream); border:none; }
+  .ms-item span { font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-muted); font-weight:700; }
+  .ms-item b { font-size:14px; color:var(--Indigo); font-weight:800; font-variant-numeric:tabular-nums; }
+  :root.dark .msh-name { color: var(--text-primary); }
 </style>
+<script>
+  // 다크모드 — paint 전에 적용해 깜빡임(flash) 방지
+  if (localStorage.getItem('ssen-dark') === '1') document.documentElement.classList.add('dark');
+</script>
 </head>
 <body>
 <div class="app">
 
   <!-- Header -->
+  <div class="header-block">
   <div class="header">
-    <h1><span class="dot"></span>SSen 주도주 대시보드</h1>
+    <h1>
+      <span class="brand-logo">
+        <svg width="46" height="46" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="lbg3" x1="4" y1="4" x2="46" y2="46" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#F2FBE9"/>
+              <stop offset="1" stop-color="#FFFFFF"/>
+            </linearGradient>
+            <linearGradient id="ltrend3" x1="10" y1="38" x2="40" y2="10" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#8BAFD0"/>
+              <stop offset="1" stop-color="#7DC838"/>
+            </linearGradient>
+          </defs>
+          <!-- Light cream badge -->
+          <rect x="3" y="3" width="44" height="44" rx="15" fill="url(#lbg3)"/>
+          <!-- Dark green border -->
+          <rect x="3" y="3" width="44" height="44" rx="15" fill="none" stroke="#111844" stroke-width="2"/>
+          <!-- Inner sheen -->
+          <rect x="5" y="5" width="40" height="16" rx="11" fill="rgba(255,255,255,.55)"/>
+          <!-- Candle 1 (left / low) — red rising -->
+          <line x1="14" y1="27" x2="14" y2="43" stroke="rgba(17,24,68,.22)" stroke-width="1.4" stroke-linecap="round"/>
+          <rect x="10.5" y="29.5" width="7" height="9" rx="2.5" fill="#D93025"/>
+          <!-- Candle 2 (mid) — red rising -->
+          <line x1="25" y1="20" x2="25" y2="36" stroke="rgba(17,24,68,.22)" stroke-width="1.4" stroke-linecap="round"/>
+          <rect x="21.5" y="22.5" width="7" height="9" rx="2.5" fill="#E5484D"/>
+          <!-- Candle 3 (right / high) — red rising -->
+          <line x1="36" y1="12" x2="36" y2="28" stroke="rgba(17,24,68,.22)" stroke-width="1.4" stroke-linecap="round"/>
+          <rect x="32.5" y="14.5" width="7" height="9" rx="2.5" fill="#EF7070"/>
+          <!-- Green trend line -->
+          <polyline points="14,33 25,27 36,19" fill="none" stroke="url(#ltrend3)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Trend tip dot -->
+          <circle cx="36" cy="19" r="3.5" fill="#7DC838"/>
+          <circle cx="36" cy="19" r="1.8" fill="#fff" opacity=".9"/>
+        </svg>
+      </span>
+      <span class="brand-name"><b>SSen</b> 주도주 대시보드</span>
+    </h1>
     <div class="meta-badge" id="meta-badge">
       <span><small>데이터 기준일</small><span class="val" id="meta-max-date">-</span></span>
       <span><small>마지막 업데이트</small><span class="val" id="meta-updated">-</span></span>
       <span><small>버전</small><span class="val" id="meta-version">-</span></span>
+      <button class="dark-toggle" id="dark-toggle" onclick="toggleDarkMode()" aria-label="다크모드 전환" aria-pressed="false">🌙</button>
     </div>
   </div>
 
   <!-- Controls -->
   <div class="controls">
-    <label>시작일</label>
-    <input type="date" id="start-date" onchange="onStartDateChange()">
-    <label>종료일</label>
-    <input type="date" id="end-date" onchange="onEndDateChange()">
-    <button class="btn btn-primary" onclick="doQuery()">조회</button>
+    <label for="start-date">시작일</label>
+    <input type="date" id="start-date" onchange="onStartDateChange()" aria-label="조회 시작일">
+    <label for="end-date">종료일</label>
+    <input type="date" id="end-date" onchange="onEndDateChange()" aria-label="조회 종료일">
+    <button class="btn btn-primary" onclick="doQuery()" aria-label="선택한 기간으로 조회">조회</button>
     <div class="shortcuts">
-      <button class="btn btn-ghost" onclick="setShortcutDays(7)">1주</button>
-      <button class="btn btn-ghost" onclick="setShortcut(1)">1개월</button>
-      <button class="btn btn-ghost" onclick="setShortcut(3)">3개월</button>
-      <button class="btn btn-ghost" onclick="setShortcut(6)">6개월</button>
-      <button class="btn btn-ghost" onclick="setShortcut(12)">1년</button>
-      <select id="year-select" class="btn btn-ghost" onchange="setYear(this.value)">
+      <button class="btn btn-ghost" onclick="setShortcutDays(7)" aria-label="최근 1주 조회">1주</button>
+      <button class="btn btn-ghost" onclick="setShortcut(1)" aria-label="최근 1개월 조회">1개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(3)" aria-label="최근 3개월 조회">3개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(6)" aria-label="최근 6개월 조회">6개월</button>
+      <button class="btn btn-ghost" onclick="setShortcut(12)" aria-label="최근 1년 조회">1년</button>
+      <select id="year-select" class="btn btn-ghost" onchange="setYear(this.value)" aria-label="연도 선택">
         <option value="">연도 선택</option>
+        <option value="2015">2015년</option>
+        <option value="2016">2016년</option>
+        <option value="2017">2017년</option>
+        <option value="2018">2018년</option>
+        <option value="2019">2019년</option>
         <option value="2020">2020년</option>
         <option value="2021">2021년</option>
         <option value="2022">2022년</option>
@@ -275,6 +686,7 @@
     </div>
     <span id="query-status" style="font-size:12px;color:var(--text-muted);"></span>
   </div>
+  </div><!-- /header-block -->
 
   <!-- Tab nav -->
   <div class="tab-nav">
@@ -284,6 +696,8 @@
 
   <!-- Error -->
   <div id="error-msg" class="error" style="display:none;"></div>
+  <!-- 2020년 이전 포함 조회 안내 (테마 소급적용/서바이버십 편향) -->
+  <div id="trades-notice-msg" style="display:none;margin:0 0 12px;border:1px solid var(--border-bright);background:rgba(255,180,60,.08);padding:10px 14px;border-radius:8px;font-size:13px;"></div>
 
   <!-- ══════════════════════════════════════════════════════════════════════ -->
   <!-- Tab: 트레이드 -->
@@ -321,7 +735,7 @@
 
     <!-- Timeline -->
     <div class="section">
-      <div class="section-header">
+      <div class="section-header section-header--Seagull">
         <h2>📊 주도 테마 레짐 타임라인</h2>
         <span id="regime-count" style="font-size:12px;color:var(--text-muted);"></span>
       </div>
@@ -332,7 +746,7 @@
 
     <!-- Trade Table -->
     <div class="section">
-      <div class="section-header">
+      <div class="section-header section-header--Seagull">
         <h2>📋 트레이드 로그</h2>
       </div>
       <div class="section-body">
@@ -379,7 +793,7 @@
 
     <!-- Explainability Panel -->
     <div class="section">
-      <div class="section-header">
+      <div class="section-header section-header--Seagull">
         <h2>💡 근거 패널 (Explainability)</h2>
         <span style="font-size:12px;color:var(--text-muted);">트레이드 행을 클릭하면 상세 근거를 확인합니다</span>
       </div>
@@ -388,19 +802,25 @@
       </div>
     </div>
 
-    <!-- SuperTrend 주도테마 돌파 전략 -->
-    <div class="section">
-      <div class="section-header">
-        <h2>🚀 기준선 지지 + RS 추세 전략</h2>
-        <span style="font-size:12px;color:var(--text-muted);">압도적 주도테마·강세 주도종목/이벤트 후보군 대상 변동성 수축(5봉 5%이내)·RS 추세·시장 국면 필터 통과 시 매수, -5% 손절/+10% 1차 익절(1/3)+USAF 추세추종 (포트폴리오 10슬롯)</span>
+    <!-- ▼ 전략별 포착 종목 (3개 전략 통합) -->
+    <div class="section strat-section">
+      <div class="section-header section-header--Seagull">
+        <h2>🎯 전략별 포착 종목</h2>
+        <span style="font-size:12px;color:var(--text-muted);">전략을 선택하면 포착 종목이 카드로 표시됩니다 · 카드를 클릭하면 차트가 바로 열립니다</span>
       </div>
       <div class="section-body">
-        <div class="sec-hint">
-          후보: 최근 60일 이내에 ⓐ 압도적 주도 테마일의 theme1_rank≤2 종목 또는 ⓑ 강세 주도종목/이벤트(기여점수≥4)에
-          1회 이상 해당된 종목 중,
+        <div class="strat-switch">
+          <button class="strat-btn active" onclick="switchStrategy('st',this)"><span class="sb-name">기준선 지지 + RS 추세</span><span class="strat-btn-stat" id="st-btnstat">–</span></button>
+          <button class="strat-btn" onclick="switchStrategy('rsb',this)"><span class="sb-name">RS강세 · 거래대금 · 슈퍼트렌드</span><span class="strat-btn-stat" id="rsb-btnstat">–</span></button>
+          <button class="strat-btn" onclick="switchStrategy('pb',this)"><span class="sb-name">기준봉 눌림목</span><span class="strat-btn-stat" id="pb-btnstat">–</span></button>
+        </div>
+        <div class="strat-panel active" id="panel-st">
+          <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('st-cond',this)">전략 조건 ▾</button></div>
+        <div class="sec-hint cond-text" id="st-cond" style="display:none">
+          후보: 최근 120거래일 이내 거래대금 1,000억원 이상인 날이 1회 이상 있는 종목 중,
           아래 5개 조건을 모두 만족하는 날(N)의 종가에 매수 →
-          ① 최근 5봉 모두 (고가-저가)/저가*100 &lt;= 5% (변동성 수축: 최근 5봉 모두 일중 변동폭이 5% 이내인 좁은 가격대)
-          ② Lowest(저가,15) &gt; (Highest(고가,60)+Lowest(저가,60))/2 AND Lowest(저가,20) &gt; EMA(종가,60)
+          ① 최근 5봉 모두 (고가-저가)/저가*100 &lt;= 5% (변동성 수축: 최근 5봉 모두 일중 변동폭이 5% 이내인 좁은 가격대) AND 종가 &gt;= 시가*1.01
+          ② (Highest(고가,9)+Lowest(저가,9))/2 &gt; (Highest(고가,26)+Lowest(저가,26))/2 AND (Highest(고가,26)+Lowest(저가,26))/2 &gt; (Highest(고가,52)+Lowest(저가,52))/2 AND EMA(종가,5) &gt; (Highest(고가,9)+Lowest(저가,9))/2
           ③ EMA(종가,60) &gt; EMA(종가,120) AND EMA(종가,120) &gt; EMA(종가,240) (장기 이평 정배열)
           ④ RS점수 ≥85 AND RS점수 &gt; 코스피의 RS점수
           ⑤ 코스피 종가 &gt; 코스피 EMA(20) AND 코스피 종가 &gt; 코스피 EMA(60) (시장 국면 필터: 코스피 하락 추세 시 매수 신호 무효)
@@ -411,126 +831,61 @@
           포트폴리오: 동시 보유 10슬롯(슬롯당 자금 1/10)에 진입일 순서로 배정, 빈 슬롯이 없으면 해당 거래는 자금 부족으로 제외 →
           청산 이벤트 순서의 슬롯 합산 자본으로 누적수익률/MDD 산출
         </div>
-        <div class="cards">
-          <div class="card">
-            <div class="label">총 거래</div>
-            <div class="value" id="st-total">-</div>
-            <div class="sub" id="st-closed">-</div>
-          </div>
-          <div class="card">
-            <div class="label">승률</div>
-            <div class="value" id="st-winrate">-</div>
-            <div class="sub">청산 완료 기준</div>
-          </div>
-          <div class="card">
-            <div class="label">평균 수익률</div>
-            <div class="value" id="st-avg-pnl">-</div>
-            <div class="sub">건당</div>
-          </div>
-          <div class="card">
-            <div class="label">누적 수익률</div>
-            <div class="value" id="st-total-pnl">-</div>
-            <div class="sub">복리 기준(10슬롯 동시운용)</div>
-          </div>
-          <div class="card">
-            <div class="label">MDD</div>
-            <div class="value" id="st-mdd">-</div>
-            <div class="sub">최대 낙폭</div>
-          </div>
+        <div class="strat-metrics">
+          <div class="metric"><span class="m-label">총 거래</span><span class="value" id="st-total">-</span><span class="m-sub" id="st-closed">-</span></div>
+          <div class="metric"><span class="m-label">승률</span><span class="value" id="st-winrate">-</span><span class="m-sub">청산 완료</span></div>
+          <div class="metric"><span class="m-label">평균 수익률</span><span class="value" id="st-avg-pnl">-</span><span class="m-sub">건당</span></div>
+          <div class="metric hero"><span class="m-label">누적 수익률</span><span class="value" id="st-total-pnl">-</span><span class="m-sub">복리 기준 · 10슬롯</span></div>
+          <div class="metric"><span class="m-label">MDD</span><span class="value" id="st-mdd">-</span><span class="m-sub">최대 낙폭</span></div>
         </div>
-        <div class="table-wrap" id="st-table"></div>
-      </div>
-    </div>
+        <div class="stock-strip" id="st-strip"><div class="strip-empty">조회하면 포착 종목이 카드로 표시됩니다</div></div>
+        <button class="mini-toggle" onclick="toggleCollapse('st-tablewrap',this)">전체 표 보기 ▾</button>
+        <div id="st-tablewrap" style="display:none"><div class="table-wrap" id="st-table"></div></div>
+      </div><!-- /panel-st -->
 
-    <!-- RS≥85 + 거래대금 1천억 + 슈퍼트렌드 돌파 전략 -->
-    <div class="section">
-      <div class="section-header">
-        <h2>📊 RS강세 거래대금 슈퍼트렌드 돌파 전략</h2>
-        <span style="font-size:12px;color:var(--text-muted);">RS점수≥85 + 50일 이내 거래대금 1천억 + 슈퍼트렌드(21,3) 첫 돌파 후 단봉 매수</span>
-      </div>
-      <div class="section-body">
-        <div class="sec-hint">
+      <div class="strat-panel" id="panel-rsb">
+        <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('rsb-cond',this)">전략 조건 ▾</button></div>
+        <div class="sec-hint cond-text" id="rsb-cond" style="display:none">
           종목 선정: ① RS점수(20/60/120/250일 수익률 가중 백분위, 가중치 10/30/20/40%) ≥85 ② 그 날로부터 50거래일 이내(당일 포함)
           당일 거래대금 ≥1,000억원 발생 →
           매수 조건: ③ 그 이후 슈퍼트렌드(21,3) 첫 상승전환일의 슈퍼트렌드 값이 52주 신고가 -15% 이내 ④ 그 돌파일 이후 3거래일 이내
           단봉(|종가-시가|/시가&lt;3%)의 종가에 매수 →
           매도 조건: ⑤ 매수 이후 종가가 20일 이동평균선(SMA20) 아래로 마감하는 첫 날의 종가에 매도
         </div>
-        <div class="cards">
-          <div class="card">
-            <div class="label">총 거래</div>
-            <div class="value" id="rsb-total">-</div>
-            <div class="sub" id="rsb-closed">-</div>
-          </div>
-          <div class="card">
-            <div class="label">승률</div>
-            <div class="value" id="rsb-winrate">-</div>
-            <div class="sub">청산 완료 기준</div>
-          </div>
-          <div class="card">
-            <div class="label">평균 수익률</div>
-            <div class="value" id="rsb-avg-pnl">-</div>
-            <div class="sub">건당</div>
-          </div>
-          <div class="card">
-            <div class="label">누적 수익률</div>
-            <div class="value" id="rsb-total-pnl">-</div>
-            <div class="sub">복리 기준</div>
-          </div>
-          <div class="card">
-            <div class="label">MDD</div>
-            <div class="value" id="rsb-mdd">-</div>
-            <div class="sub">최대 낙폭</div>
-          </div>
+        <div class="strat-metrics">
+          <div class="metric"><span class="m-label">총 거래</span><span class="value" id="rsb-total">-</span><span class="m-sub" id="rsb-closed">-</span></div>
+          <div class="metric"><span class="m-label">승률</span><span class="value" id="rsb-winrate">-</span><span class="m-sub">청산 완료</span></div>
+          <div class="metric"><span class="m-label">평균 수익률</span><span class="value" id="rsb-avg-pnl">-</span><span class="m-sub">건당</span></div>
+          <div class="metric hero"><span class="m-label">누적 수익률</span><span class="value" id="rsb-total-pnl">-</span><span class="m-sub">복리 기준</span></div>
+          <div class="metric"><span class="m-label">MDD</span><span class="value" id="rsb-mdd">-</span><span class="m-sub">최대 낙폭</span></div>
         </div>
-        <div class="table-wrap" id="rsb-table"></div>
-      </div>
-    </div>
+        <div class="stock-strip" id="rsb-strip"><div class="strip-empty">조회하면 포착 종목이 카드로 표시됩니다</div></div>
+        <button class="mini-toggle" onclick="toggleCollapse('rsb-tablewrap',this)">전체 표 보기 ▾</button>
+        <div id="rsb-tablewrap" style="display:none"><div class="table-wrap" id="rsb-table"></div></div>
+      </div><!-- /panel-rsb -->
 
-    <!-- 기준봉 눌림목 타점 전략 -->
-    <div class="section">
-      <div class="section-header">
-        <h2>📊 기준봉 눌림목 타점 전략</h2>
-        <span style="font-size:12px;color:var(--text-muted);">HM(슈퍼트렌드·일목기준선·VW120·EMA60/120/240 중 최대) 상향 돌파 기준봉 + 눌림목 단봉 매수</span>
-      </div>
-      <div class="section-body">
-        <div class="sec-hint">
+      <div class="strat-panel" id="panel-pb">
+        <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('pb-cond',this)">전략 조건 ▾</button></div>
+        <div class="sec-hint cond-text" id="pb-cond" style="display:none">
           매수 조건: ① 전일종가&lt;HM이고 금일종가&gt;HM (HM = MAX(슈퍼트렌드(21,3), 일목기준선(26), 120봉 거래량가중평균가, EMA60, EMA120, EMA240))인 기준봉(t) 발생
           ② 최근 120봉 중 거래대금&gt;1,000억인 봉이 1개 이상 ③ VPower=((종가-시가)/ATR21)×(거래량/MA거래량21) &gt; 1.5 →
           기준봉 이후 t+1~t+4일 동안 저가가 (기준봉저가+추적중 최고가)/2 아래로 한 번도 떨어지지 않은 상태에서
           거래량&lt;기준봉거래량 이고 |종가-시가|≤시가×3%인 첫째 날의 종가에 매수 (4일 내 미충족 시 소멸) →
           매도 조건: 기준선 지지 + RS 추세 전략과 동일 (-5% 손절 / +10% 1차 익절(1/3) 후 USAF 추세추종 전량 매도)
         </div>
-        <div class="cards">
-          <div class="card">
-            <div class="label">총 거래</div>
-            <div class="value" id="pb-total">-</div>
-            <div class="sub" id="pb-closed">-</div>
-          </div>
-          <div class="card">
-            <div class="label">승률</div>
-            <div class="value" id="pb-winrate">-</div>
-            <div class="sub">청산 완료 기준</div>
-          </div>
-          <div class="card">
-            <div class="label">평균 수익률</div>
-            <div class="value" id="pb-avg-pnl">-</div>
-            <div class="sub">건당</div>
-          </div>
-          <div class="card">
-            <div class="label">누적 수익률</div>
-            <div class="value" id="pb-total-pnl">-</div>
-            <div class="sub">복리 기준(10슬롯 동시운용)</div>
-          </div>
-          <div class="card">
-            <div class="label">MDD</div>
-            <div class="value" id="pb-mdd">-</div>
-            <div class="sub">최대 낙폭</div>
-          </div>
+        <div class="strat-metrics">
+          <div class="metric"><span class="m-label">총 거래</span><span class="value" id="pb-total">-</span><span class="m-sub" id="pb-closed">-</span></div>
+          <div class="metric"><span class="m-label">승률</span><span class="value" id="pb-winrate">-</span><span class="m-sub">청산 완료</span></div>
+          <div class="metric"><span class="m-label">평균 수익률</span><span class="value" id="pb-avg-pnl">-</span><span class="m-sub">건당</span></div>
+          <div class="metric hero"><span class="m-label">누적 수익률</span><span class="value" id="pb-total-pnl">-</span><span class="m-sub">복리 기준 · 10슬롯</span></div>
+          <div class="metric"><span class="m-label">MDD</span><span class="value" id="pb-mdd">-</span><span class="m-sub">최대 낙폭</span></div>
         </div>
-        <div class="table-wrap" id="pb-table"></div>
-      </div>
-    </div>
+        <div class="stock-strip" id="pb-strip"><div class="strip-empty">조회하면 포착 종목이 카드로 표시됩니다</div></div>
+        <button class="mini-toggle" onclick="toggleCollapse('pb-tablewrap',this)">전체 표 보기 ▾</button>
+        <div id="pb-tablewrap" style="display:none"><div class="table-wrap" id="pb-table"></div></div>
+      </div><!-- /panel-pb -->
+      </div><!-- /strat-body -->
+    </div><!-- /strat-section -->
 
   </div><!-- /tab-trade -->
 
@@ -553,13 +908,42 @@
   <div class="tt-row"><span class="tt-key">거래대금</span><span class="tt-val" id="tt-amount">-</span></div>
   <div class="tt-row"><span class="tt-key">상승일비율</span><span class="tt-val" id="tt-upratio">-</span></div>
   <div class="tt-row"><span class="tt-key">등장일수</span><span class="tt-val" id="tt-days">-</span></div>
+  <div class="tt-key" id="tt-topstock-label" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">테마 내 1~3위 종목</div>
+  <div id="tt-topstocks"></div>
+</div>
+
+<!-- 종목 차트 모달 -->
+<div id="stock-chart-modal">
+  <div class="modal-backdrop" onclick="closeStockChart()"></div>
+  <div class="modal-card">
+    <button class="modal-close" onclick="closeStockChart()">✕</button>
+    <div class="modal-head" id="modal-stock-head"></div>
+    <div class="modal-stats" id="modal-stats"></div>
+    <div class="chart-box" id="modal-chart-box"><h3 id="modal-chart-title"></h3></div>
+  </div>
 </div>
 
 <script>
 const API = 'http://localhost:8000';
 Chart.defaults.font.family = "'Pretendard','Apple SD Gothic Neo','Noto Sans KR',sans-serif";
-Chart.defaults.color = '#7fa8cc';
+Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#585F7A';
 const CACHE = new Map();
+
+// 다크모드 토글 — :root.dark 클래스 + localStorage 영속화
+function toggleDarkMode() {
+  const isDark = document.documentElement.classList.toggle('dark');
+  localStorage.setItem('ssen-dark', isDark ? '1' : '0');
+  const btn = document.getElementById('dark-toggle');
+  if (btn) { btn.textContent = isDark ? '☀️' : '🌙'; btn.setAttribute('aria-pressed', String(isDark)); }
+  Chart.defaults.color = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim();
+  Object.values(Chart.instances || {}).forEach(c => c.update());
+}
+if (document.documentElement.classList.contains('dark')) {
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('dark-toggle');
+    if (btn) { btn.textContent = '☀️'; btn.setAttribute('aria-pressed', 'true'); }
+  });
+}
 
 let allTrades = [];
 let filteredTrades = [];
@@ -569,8 +953,8 @@ let selectedTradeId = null;
 let regimes = [];
 let dominantDaysMap = {};  // `${date}|${theme1}` -> {amount_ratio, n_stocks, pct_gap}
 let themeColors = {};
-const PALETTE = ['#3a9fd8','#e8543e','#2ecc71','#9b59b6','#f2b50f','#d44e7a','#6ab04c','#4c6bc4','#16a085','#c0392b','#2980b9','#27ae60','#8e44ad','#f39c12','#e74c3c','#1abc9c','#d35400','#7fa8cc','#e67e22','#2c3e50','#ff7f50','#5d6d7e','#a3cb38','#fd79a8'];
-const FIXED_THEME_COLORS = { '수소': '#3a9fd8', '보안': '#e8543e', '지주사': '#2ecc71', '양자': '#9b59b6', '반도체': '#f2b50f' };
+const PALETTE = ['#60A5FA','#e8543e','#2ecc71','#9b59b6','#f2b50f','#d44e7a','#6ab04c','#4c6bc4','#16a085','#c0392b','#2980b9','#27ae60','#8e44ad','#f39c12','#e74c3c','#1abc9c','#d35400','#7fa8cc','#e67e22','#2c3e50','#ff7f50','#5d6d7e','#a3cb38','#fd79a8'];
+const FIXED_THEME_COLORS = { '수소': '#60A5FA', '보안': '#e8543e', '지주사': '#2ecc71', '양자': '#9b59b6', '반도체': '#f2b50f' };
 // PALETTE 앞 5칸이 FIXED_THEME_COLORS 값과 동일해서, 동적 배정 시 인덱스 기반(i % PALETTE.length)으로
 // 고르면 다른 테마가 같은 색을 또 뽑아 고정색 테마와 겹치는 버그가 있었음(예: 지주사·우주항공 둘 다
 // 초록) — FIXED 값을 제외한 풀에서만 동적 배정하도록 분리
@@ -579,7 +963,7 @@ let colorIdx = 0;
 // 테마 추이(테마 추이 차트)에서 동시에 표시되는 최대 5개 테마는 항상 서로 뚜렷하게
 // 구분되는 5색을 "선택 순서(슬롯)" 기준으로 우선 배정 — 전체 테마 목록 인덱스 기준으로
 // 배정하면 우연히 비슷한 색 계열(노란/주황 등)이 같이 뽑힐 수 있었음(실측: LNG·초전도체)
-const TREND_SLOT_COLORS = ['#1fb87a', '#3a9fd8', '#e05e30', '#9b6bd6', '#e8b84b'];
+const TREND_SLOT_COLORS = ['#1fb87a', '#60A5FA', '#FF5A5F', '#9b6bd6', '#e8b84b'];
 let periodCharts = {};  // Chart 인스턴스 보관
 let stTrades = [];   // 기준선 지지 + RS 추세 전략 트레이드
 let rsbTrades = [];  // RS강세 거래대금 슈퍼트렌드 돌파 전략 트레이드
@@ -608,6 +992,7 @@ function switchTab(name, btn) {
     const end   = document.getElementById('end-date').value;
     if (start && end && loadedPeriodKey !== start + '|' + end) loadPeriod(start, end);
   }
+  showNotice(name === 'trade' ? lastTradesNotice : null);
 }
 
 // ── Date helpers ──────────────────────────────────────────────────────────────
@@ -619,7 +1004,7 @@ function daysAgo(n) {
   const d = new Date(); d.setDate(d.getDate() - n); return d.toISOString().slice(0,10);
 }
 function setShortcut(months) {
-  document.getElementById('start-date').value = months === 0 ? '2020-01-01' : monthsAgo(months);
+  document.getElementById('start-date').value = months === 0 ? '2015-01-01' : monthsAgo(months);
   document.getElementById('end-date').value = today();
   doQuery();
 }
@@ -705,6 +1090,7 @@ async function doQuery() {
     regimes = regR.data || [];
     allTrades = trR.data || [];
     const summary = trR.summary || {};
+    showNotice(trR.notice || stR.notice || rsbR.notice || pbR.notice);
 
     dominantDaysMap = {};
     for (const d of (domR && domR.days) || []) {
@@ -776,6 +1162,7 @@ function renderSuperTrend(s, trades) {
   renderExpandableTable('st-table', stTrades, theadHtml, rowFn,
     '조건에 맞는 트레이드가 없습니다 (슈퍼트렌드·볼린저밴드 돌파 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
   tableRenderers['st-table'] = () => renderSuperTrend(stSummaryCache, stTrades);
+  renderStockStrip('st');
 }
 
 // ── RS강세 거래대금 슈퍼트렌드 돌파 전략 ──────────────────────────────────────────
@@ -822,6 +1209,7 @@ function renderRsBreakout(s, trades) {
   renderExpandableTable('rsb-table', rsbTrades, theadHtml, rowFn,
     '조건에 맞는 트레이드가 없습니다 (RS점수≥85 + 거래대금 1천억 + 슈퍼트렌드 돌파 + 단봉 매수 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
   tableRenderers['rsb-table'] = () => renderRsBreakout(rsbSummaryCache, rsbTrades);
+  renderStockStrip('rsb');
 }
 
 // ── 기준봉 눌림목 타점 전략 ────────────────────────────────────────────────────
@@ -866,11 +1254,255 @@ function renderPullback(s, trades) {
   renderExpandableTable('pb-table', pbTrades, theadHtml, rowFn,
     '조건에 맞는 트레이드가 없습니다 (기준봉 HM 돌파 + 거래대금 조건 + 눌림목 단봉 매수 조건을 동시에 만족하는 사례가 드뭅니다)', 10);
   tableRenderers['pb-table'] = () => renderPullback(pbSummaryCache, pbTrades);
+  renderStockStrip('pb');
+}
+
+function switchStrategy(kind, btn) {
+  document.querySelectorAll('.strat-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.strat-btn').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + kind);
+  if (panel) panel.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+function toggleCollapse(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const opening = el.style.display === 'none';
+  el.style.display = opening ? '' : 'none';
+  if (btn) {
+    btn.classList.toggle('open', opening);
+    btn.innerHTML = btn.innerHTML.replace(/[▾▴]/, opening ? '▴' : '▾');
+  }
+}
+
+function reasonShort(r) {
+  const m = { regime_end:['레짐교체','rs-blue'], stop_loss:['손절','rs-red'], take_profit:['익절','rs-green'], open:['보유중','rs-yellow'] };
+  const x = m[r] || [r || '-', 'rs-blue'];
+  return '<span class="sc-reason ' + x[1] + '">' + x[0] + '</span>';
+}
+
+function renderStockStrip(kind) {
+  const trades = kind === 'st' ? stTrades : kind === 'rsb' ? rsbTrades : pbTrades;
+  const cache  = kind === 'st' ? stSummaryCache : kind === 'rsb' ? rsbSummaryCache : pbSummaryCache;
+  const el = document.getElementById(kind + '-strip');
+  if (!el) return;
+
+  const bs = document.getElementById(kind + '-btnstat');
+  if (bs) {
+    const tp = cache && cache.total_pnl_pct;
+    bs.textContent = (tp != null ? (tp > 0 ? '+' : '') + tp.toFixed(1) + '% · ' : '') + (trades.length) + '건';
+    bs.className = 'strat-btn-stat ' + pnlClass(tp);
+  }
+
+  if (!trades || !trades.length) {
+    el.innerHTML = '<div class="strip-empty">조건에 맞는 포착 종목이 없습니다</div>';
+    return;
+  }
+  const LIMIT = 24;
+  const cards = trades.slice(0, LIMIT).map((t, i) => {
+    const p = t.pnl_pct;
+    const open = p == null;
+    const cls = pnlClass(p);
+    const pct = open ? '보유중' : (p > 0 ? '+' : '') + p.toFixed(1) + '%';
+    const w = open ? 6 : Math.min(100, Math.abs(p) / 30 * 100);
+    const barCol = p > 0 ? '#FF5A5F' : p < 0 ? '#60A5FA' : '#6b8499';
+    const entry = (t.entry_date || '').slice(2);
+    const hold = t.hold_days != null ? ' · ' + t.hold_days + '일' : '';
+    return '<div class="stock-card" onclick="openStockChart(\'' + kind + '\',' + i + ')">' +
+      '<div class="sc-top"><span class="sc-name">' + (t.name || '-') + '</span><span class="sc-pnl ' + cls + '">' + pct + '</span></div>' +
+      '<div class="sc-bar"><div class="sc-bar-fill" style="width:' + w + '%;background:' + barCol + '"></div></div>' +
+      '<div class="sc-meta"><span class="sc-date">' + entry + hold + '</span>' + reasonShort(t.exit_reason) + '</div>' +
+    '</div>';
+  }).join('');
+  const more = trades.length > LIMIT ? '<div class="strip-more">+' + (trades.length - LIMIT) + '건 더 — \'전체 표 보기\'에서 확인</div>' : '';
+  el.innerHTML = cards + more;
+}
+
+function exitKoMap(r) {
+  return { regime_end:'주도 테마 교체', stop_loss:'손절 기준 도달', take_profit:'익절 기준 도달', open:'포지션 유지중' }[r] || (r || '-');
+}
+
+function openStockChart(kind, idx) {
+  const trades = kind === 'st' ? stTrades : kind === 'rsb' ? rsbTrades : pbTrades;
+  const t = trades[idx];
+  if (!t) return;
+  const cls = pnlClass(t.pnl_pct);
+  document.getElementById('modal-stock-head').innerHTML =
+    '<div><div class="msh-name">' + t.name + ' <span class="msh-code">' + t.code + '</span></div>' +
+    '<div class="msh-strat">' + (EXTERNAL_STRATEGY_LABEL[kind] || '') + '</div></div>' +
+    '<div class="msh-pnl ' + cls + '">' + (t.pnl_pct != null ? (t.pnl_pct > 0 ? '+' : '') + t.pnl_pct.toFixed(2) + '%' : '보유중') + '</div>';
+
+  const stats = [
+    ['진입', (t.entry_date || '-') + (t.entry_price != null ? ' · ' + t.entry_price.toLocaleString() + '원' : '')],
+    ['청산', (t.exit_date || '미청산') + (t.exit_price != null ? ' · ' + t.exit_price.toLocaleString() + '원' : '')],
+    ['보유일', t.hold_days != null ? t.hold_days + '일' : '-'],
+    ['청산 사유', exitKoMap(t.exit_reason)],
+  ];
+  if (t.rs_score != null) stats.push(['RS점수', t.rs_score]);
+  document.getElementById('modal-stats').innerHTML = stats.map(s => '<div class="ms-item"><span>' + s[0] + '</span><b>' + s[1] + '</b></div>').join('');
+
+  document.getElementById('modal-chart-title').innerHTML = '📈 ' + t.name + '(' + t.code + ') 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ' + t.entry_date + ' 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small>';
+  const box = document.getElementById('modal-chart-box');
+  box.querySelectorAll('.empty').forEach(e => e.remove());
+  if (!document.getElementById('ch-modal-price')) {
+    box.insertAdjacentHTML('beforeend', '<div class="chart-container" style="height:320px"><canvas id="ch-modal-price"></canvas></div><div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-modal-volume"></canvas></div>');
+  }
+  document.getElementById('stock-chart-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderExplainChart(t, 'ch-modal-price', 'ch-modal-volume', 'modal');
+}
+
+function closeStockChart() {
+  document.getElementById('stock-chart-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStockChart(); });
+
+// ── 기간분석 탭 「종목별 강세」 — 압도적 테마 종목 / 당일 강세 종목 / 강세 지속 종목 공용 카드 스트립 ──
+const PERIOD_KIND_LABEL = { dom: '압도적 테마 종목', event: '당일 강세 종목', leader: '강세 지속 종목' };
+function periodArr(kind) { return kind === 'dom' ? dominantTopData : kind === 'event' ? eventsData : leadersData; }
+function periodDate(kind, t) { return kind === 'leader' ? t.first_signal_date : t.date; }
+function periodHeadline(kind, t) { return kind === 'dom' ? t.change_pct : kind === 'event' ? t.contrib_score : t.cumret_pct; }
+function periodHeadlineStr(kind, v) {
+  if (v == null) return '-';
+  return kind === 'event' ? v.toFixed(1) + '점' : (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+}
+function periodBadge(kind, t) {
+  if (kind === 'dom') return (t.theme1_rank != null ? '#' + t.theme1_rank + ' ' : '') + (t.theme1 || '-');
+  if (kind === 'event') return t.theme1 || '-';
+  return t.first_signal_rs != null ? 'RS ' + t.first_signal_rs.toFixed(1) : (t.theme1 || '-');
+}
+
+function renderPeriodStrip(containerId, items, kind) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  if (!items || !items.length) {
+    el.innerHTML = '<div class="strip-empty">조건에 맞는 종목이 없습니다</div>';
+    return;
+  }
+  const LIMIT = 8;  // 3열 동시비교 레이아웃이라 칸이 좁음 — 전략별 포착 종목(24)보다 적게
+  const maxScale = kind === 'event' ? 10 : 30;
+
+  // 「당일 강세 종목」은 같은 종목이 여러 날 반복 출현하는 경우가 많아
+  // 날짜별로 카드를 따로 두면 같은 종목명이 중복 나열되어 직관성이 떨어짐 → 종목 단위로 그룹화
+  if (kind === 'event') {
+    const groups = new Map();
+    items.forEach(t => {
+      if (!groups.has(t.code)) groups.set(t.code, []);
+      groups.get(t.code).push(t);
+    });
+    const groupArr = [...groups.values()].map(occ => {
+      const best = occ.reduce((m, o) => (o.contrib_score ?? -Infinity) > m ? o.contrib_score : m, -Infinity);
+      return { code: occ[0].code, name: occ[0].name || occ[0].code, theme1: occ[0].theme1, best, occ };
+    }).sort((a, b) => b.best - a.best);
+
+    const cards = groupArr.slice(0, LIMIT).map(g => {
+      const cls = pnlClass(g.best);
+      const pct = periodHeadlineStr('event', g.best);
+      const w = Math.min(100, Math.abs(g.best) / maxScale * 100);
+      const barCol = g.best > 0 ? '#FF5A5F' : g.best < 0 ? '#60A5FA' : '#6b8499';
+      const occByDate = [...g.occ].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      const lastDate = occByDate[occByDate.length - 1].date;
+      const chips = occByDate.map(o => {
+        const s = o.contrib_score != null ? o.contrib_score.toFixed(1) : '-';
+        return '<span class="sc-occ-chip" onclick="event.stopPropagation();openPeriodStockChartByDate(\'event\',\'' + g.code + '\',\'' + o.date + '\')">' +
+          (o.date || '').slice(2) + ' · ' + s + '점</span>';
+      }).join('');
+      return '<div class="stock-card sc-grouped" onclick="openPeriodStockChartByDate(\'event\',\'' + g.code + '\',\'' + lastDate + '\')">' +
+        '<div class="sc-top"><span class="sc-name">' + g.name + (g.occ.length > 1 ? '<span class="sc-count">' + g.occ.length + '회</span>' : '') + '</span><span class="sc-pnl ' + cls + '">' + pct + '</span></div>' +
+        '<div class="sc-bar"><div class="sc-bar-fill" style="width:' + w + '%;background:' + barCol + '"></div></div>' +
+        '<div class="sc-occ-list">' + chips + '</div>' +
+        '<div class="sc-meta"><span class="sc-reason rs-blue">' + (g.theme1 || '-') + '</span></div>' +
+      '</div>';
+    }).join('');
+    const more = groupArr.length > LIMIT ? '<div class="strip-more">+' + (groupArr.length - LIMIT) + '종목 더 — \'전체 표 보기\'에서 확인</div>' : '';
+    el.innerHTML = cards + more;
+    return;
+  }
+
+  const cards = items.slice(0, LIMIT).map((t, i) => {
+    const v = periodHeadline(kind, t);
+    const cls = pnlClass(v);
+    const pct = periodHeadlineStr(kind, v);
+    const w = v == null ? 6 : Math.min(100, Math.abs(v) / maxScale * 100);
+    const barCol = v > 0 ? '#FF5A5F' : v < 0 ? '#60A5FA' : '#6b8499';
+    const d = periodDate(kind, t) || '';
+    return '<div class="stock-card" onclick="openPeriodStockChart(\'' + kind + '\',' + i + ')">' +
+      '<div class="sc-top"><span class="sc-name">' + (t.name || t.code) + '</span><span class="sc-pnl ' + cls + '">' + pct + '</span></div>' +
+      '<div class="sc-bar"><div class="sc-bar-fill" style="width:' + w + '%;background:' + barCol + '"></div></div>' +
+      '<div class="sc-meta"><span class="sc-date">' + d.slice(2) + '</span><span class="sc-reason rs-blue">' + periodBadge(kind, t) + '</span></div>' +
+    '</div>';
+  }).join('');
+  const more = items.length > LIMIT ? '<div class="strip-more">+' + (items.length - LIMIT) + '건 더 — \'전체 표 보기\'에서 확인</div>' : '';
+  el.innerHTML = cards + more;
+}
+
+function openPeriodStockChart(kind, idx) {
+  const t = periodArr(kind)[idx];
+  if (!t) return;
+  openPeriodStockChartItem(kind, t);
+}
+
+function openPeriodStockChartByDate(kind, code, dateStr) {
+  const t = periodArr(kind).find(x => x.code === code && periodDate(kind, x) === dateStr);
+  if (!t) return;
+  openPeriodStockChartItem(kind, t);
+}
+
+function openPeriodStockChartItem(kind, t) {
+  const dateField = periodDate(kind, t);
+  const v = periodHeadline(kind, t);
+  const cls = pnlClass(v);
+
+  document.getElementById('modal-stock-head').innerHTML =
+    '<div><div class="msh-name">' + (t.name || t.code) + ' <span class="msh-code">' + t.code + '</span></div>' +
+    '<div class="msh-strat">' + PERIOD_KIND_LABEL[kind] + '</div></div>' +
+    '<div class="msh-pnl ' + cls + '">' + periodHeadlineStr(kind, v) + '</div>';
+
+  const stats = [['신호일', dateField || '-'], ['테마', t.theme1 || '-']];
+  if (kind === 'dom') {
+    stats.push(['순위', t.theme1_rank != null ? '#' + t.theme1_rank : '-'],
+               ['거래대금', t.amount_100b != null ? t.amount_100b.toFixed(1) + '천억원' : '-']);
+  } else if (kind === 'event') {
+    stats.push(['누적기여', t.cum_contrib != null ? t.cum_contrib.toFixed(1) : '-'],
+               ['테마순위', t.theme1_rank != null ? '#' + t.theme1_rank : '-']);
+  } else {
+    stats.push(['등장일', t.appear_days != null ? t.appear_days + '일' : '-'],
+               ['커버리지', t.coverage_pct != null ? t.coverage_pct.toFixed(0) + '%' : '-']);
+  }
+  const rs = t.rs != null ? t.rs : t.first_signal_rs;
+  if (rs != null) stats.push(['RS점수', rs.toFixed(1)]);
+  document.getElementById('modal-stats').innerHTML =
+    stats.map(s => '<div class="ms-item"><span>' + s[0] + '</span><b>' + s[1] + '</b></div>').join('');
+
+  document.getElementById('modal-chart-title').innerHTML = '📈 ' + (t.name || t.code) + '(' + t.code + ') 차트 ' +
+    '<small style="color:var(--text-muted);font-weight:400">(' + dateField + ' 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small>';
+  const box = document.getElementById('modal-chart-box');
+  box.querySelectorAll('.empty').forEach(e => e.remove());
+  if (!document.getElementById('ch-modal-price')) {
+    box.insertAdjacentHTML('beforeend', '<div class="chart-container" style="height:320px"><canvas id="ch-modal-price"></canvas></div><div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-modal-volume"></canvas></div>');
+  }
+  document.getElementById('stock-chart-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  renderExplainChart({ code: t.code, name: t.name || t.code, entry_date: dateField }, 'ch-modal-price', 'ch-modal-volume', 'modal');
 }
 
 function showError(msg) {
   const el = document.getElementById('error-msg');
   el.textContent = msg; el.style.display = msg ? 'block' : 'none';
+}
+
+let lastTradesNotice = null;  // 트레이드 탭 notice — 기간분석 탭 전환 시에도 값은 보존, 표시만 숨김
+function showNotice(notice) {
+  lastTradesNotice = notice;
+  const el = document.getElementById('trades-notice-msg');
+  if (activeTab === 'trade' && notice && notice.length) {
+    el.innerHTML = notice.map(n => `⚠️ ${n}`).join('<br>');
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 // ── Summary cards ─────────────────────────────────────────────────────────────
@@ -1139,7 +1771,7 @@ function selectTrade(id) {
       </div>
     </div>
     <div class="explain-chart chart-box">
-      <h3>📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
+      <h3 style="background:#EEF0F4;margin:-24px -24px 16px;padding:22px 24px 18px;border-radius:26px 26px 0 0">📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
       <div class="chart-container" style="height:300px"><canvas id="ch-explain-price"></canvas></div>
       <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-explain-volume"></canvas></div>
     </div>`;
@@ -1172,7 +1804,7 @@ function selectExternalTrade(kind, idx) {
       </div>
     </div>
     <div class="explain-chart chart-box">
-      <h3>📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
+      <h3 style="background:#EEF0F4;margin:-24px -24px 16px;padding:22px 24px 18px;border-radius:26px 26px 0 0">📈 ${t.name}(${t.code}) 차트 <small style="color:var(--text-muted);font-weight:400">(진입일 ${t.entry_date} 기준 이전 100봉 + 이후 20봉, MA 5/20/60/120/240)</small></h3>
       <div class="chart-container" style="height:300px"><canvas id="ch-explain-price"></canvas></div>
       <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-explain-volume"></canvas></div>
     </div>`;
@@ -1196,8 +1828,65 @@ function selectPeriodStock(code, name, date, isDefault = false) {
   renderExplainChart({ code, name, entry_date: date }, 'ch-period-price', 'ch-period-volume', 'period');
 }
 
+// 기간분석 탭 — 종목 차트 박스의 "테마 선택"/"종목 선택" (상승·하락 테마 TOP10의 테마 내 1~3위 종목)
+let periodThemeTopStocks = {};  // theme1 -> top_stocks([{code,name,cumret_pct}])
+let periodChartRange = { start: null, end: null };
+
+function initPeriodThemeStockSelect(rising, falling, start, end) {
+  periodThemeTopStocks = {};
+  periodChartRange = { start, end };
+  document.getElementById('period-chart-range').textContent = `${start} ~ ${end}`;
+
+  const sel = document.getElementById('period-theme-select');
+  sel.innerHTML = '<option value="">선택...</option>';
+  const addGroup = (label, items) => {
+    if (!items.length) return;
+    const og = document.createElement('optgroup');
+    og.label = label;
+    items.forEach(t => {
+      periodThemeTopStocks[t.theme1] = t.top_stocks || [];
+      const opt = document.createElement('option');
+      opt.value = t.theme1; opt.textContent = t.theme1;
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  };
+  addGroup('상승 TOP10', rising);
+  addGroup('하락 TOP10', falling);
+
+  document.getElementById('period-stock-select').innerHTML = '<option value="">테마를 먼저 선택하세요</option>';
+  document.getElementById('period-stock-select').disabled = true;
+}
+
+function onPeriodThemeSelect() {
+  const theme = document.getElementById('period-theme-select').value;
+  const stockSel = document.getElementById('period-stock-select');
+  const topStocks = periodThemeTopStocks[theme] || [];
+  if (!theme || !topStocks.length) {
+    stockSel.innerHTML = '<option value="">해당 테마에 종목 정보 없음</option>';
+    stockSel.disabled = true;
+    return;
+  }
+  stockSel.innerHTML = topStocks.map((s, i) => {
+    const r = s.cumret_pct;
+    const retStr = r == null ? '-' : (r > 0 ? '+' : '') + r.toFixed(1) + '%';
+    return `<option value="${i}">${i + 1}위 ${s.name || s.code} (${retStr})</option>`;
+  }).join('');
+  stockSel.disabled = false;
+  stockSel.selectedIndex = 0;
+  onPeriodStockSelect();
+}
+
+function onPeriodStockSelect() {
+  const theme = document.getElementById('period-theme-select').value;
+  const idx = document.getElementById('period-stock-select').value;
+  const s = (periodThemeTopStocks[theme] || [])[idx];
+  if (!s) return;
+  selectPeriodStock(s.code, s.name || s.code, periodChartRange.end, true);
+}
+
 const MA_PERIODS = [5, 20, 60, 120, 240];
-const MA_COLORS = { 5: '#e05e30', 20: '#e8b84b', 60: '#6ab04c', 120: '#3a9fd8', 240: '#9b6bd6' };
+const MA_COLORS = { 5: '#FF5A5F', 20: '#e8b84b', 60: '#6ab04c', 120: '#60A5FA', 240: '#9b6bd6' };
 
 function addDaysStr(dateStr, days) {
   const d = new Date(dateStr + 'T00:00:00Z');
@@ -1210,6 +1899,60 @@ function movingAverage(values, period) {
     if (i < period - 1) return null;
     const slice = values.slice(i - period + 1, i + 1);
     return slice.reduce((a, b) => a + b, 0) / period;
+  });
+}
+
+// 슈퍼트렌드(21,3) — Wilder ATR 기반. supertrend_strategy.py의 _atr_wilder/_supertrend와 동일 로직(JS 포팅)
+function computeSupertrend(bars, period = 21, multiplier = 3) {
+  const n = bars.length;
+  const tr = new Array(n).fill(null);
+  for (let i = 0; i < n; i++) {
+    const h = bars[i].high, l = bars[i].low;
+    if (i === 0) { tr[i] = h - l; continue; }
+    const pc = bars[i - 1].close;
+    tr[i] = Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc));
+  }
+  const atr = new Array(n).fill(null);
+  if (n >= period) {
+    let sum = 0;
+    for (let i = 0; i < period; i++) sum += tr[i];
+    atr[period - 1] = sum / period;
+    for (let i = period; i < n; i++) atr[i] = (atr[i - 1] * (period - 1) + tr[i]) / period;
+  }
+  const finalUp = new Array(n).fill(null);
+  const finalDn = new Array(n).fill(null);
+  const trend = new Array(n).fill(null);
+  const st = new Array(n).fill(null);
+  const startI = period - 1;
+  for (let i = startI; i < n; i++) {
+    const src = (bars[i].high + bars[i].low) / 2;
+    const bu = src + multiplier * atr[i];
+    const bd = src - multiplier * atr[i];
+    if (i === startI) {
+      finalUp[i] = bu; finalDn[i] = bd; trend[i] = 1;
+    } else {
+      const pfUp = finalUp[i - 1], pfDn = finalDn[i - 1];
+      const prevClose = bars[i - 1].close;
+      finalUp[i] = (bu < pfUp || prevClose > pfUp) ? bu : pfUp;
+      finalDn[i] = (bd > pfDn || prevClose < pfDn) ? bd : pfDn;
+      const prevTrend = trend[i - 1];
+      const c = bars[i].close;
+      if (prevTrend === 1 && c < finalDn[i]) trend[i] = -1;
+      else if (prevTrend === -1 && c > finalUp[i]) trend[i] = 1;
+      else trend[i] = prevTrend;
+    }
+    st[i] = trend[i] === 1 ? finalDn[i] : finalUp[i];
+  }
+  return st;
+}
+
+// 전환선 = (Highest(종가,9)+Lowest(종가,9))/2
+function computeConversionLine(bars, period = 9) {
+  const closes = bars.map(b => b.close);
+  return closes.map((_, i) => {
+    if (i < period - 1) return null;
+    const slice = closes.slice(i - period + 1, i + 1);
+    return (Math.max(...slice) + Math.min(...slice)) / 2;
   });
 }
 
@@ -1231,7 +1974,7 @@ Chart.register({
       const yH = yScale.getPixelForValue(bar.h);
       const yL = yScale.getPixelForValue(bar.l);
       const yC = yScale.getPixelForValue(bar.c);
-      const color = bar.c >= bar.o ? '#e05e3a' : '#3a9fd8';
+      const color = bar.c >= bar.o ? '#FF5A5F' : '#60A5FA';
       ctx.save();
       ctx.strokeStyle = color;
       ctx.fillStyle = color;
@@ -1270,6 +2013,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
     const closes = allBars.map(b => b.close);
     const maSeries = {};
     MA_PERIODS.forEach(p => { maSeries[p] = movingAverage(closes, p); });
+    const stSeries = computeSupertrend(allBars, 21, 3);
+    const conversionSeries = computeConversionLine(allBars, 9);
 
     // 진입일 기준 이전 100봉 + 이후 20봉(총 최대 120봉). 데이터가 부족하면 가능한 만큼만 표시
     let entryAllIdx = allBars.findIndex(b => b.date === t.entry_date);
@@ -1285,6 +2030,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
     const yValues = [];
     bars.forEach(b => { yValues.push(b.high, b.low); });
     MA_PERIODS.forEach(p => { for (let i = offset; i < offset + bars.length; i++) { if (maSeries[p][i] != null) yValues.push(maSeries[p][i]); } });
+    for (let i = offset; i < offset + bars.length; i++) { if (stSeries[i] != null) yValues.push(stSeries[i]); }
+    for (let i = offset; i < offset + bars.length; i++) { if (conversionSeries[i] != null) yValues.push(conversionSeries[i]); }
     const yMin = Math.min(...yValues);
     const yMax = Math.max(...yValues);
     const yPad = (yMax - yMin) * 0.05 || 1;
@@ -1310,6 +2057,28 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
         spanGaps: true,
         tension: 0.1,
       })),
+      {
+        type: 'line',
+        label: 'SuperTrend(21,3)',
+        data: bars.map((b, i) => stSeries[offset + i]),
+        borderColor: '#1fb87a',
+        borderWidth: 1.5,
+        borderDash: [4, 3],
+        pointRadius: 0,
+        spanGaps: true,
+        tension: 0,
+      },
+      {
+        type: 'line',
+        label: '전환선(9)',
+        data: bars.map((b, i) => conversionSeries[offset + i]),
+        borderColor: '#a259e6',
+        borderWidth: 1.5,
+        borderDash: [2, 2],
+        pointRadius: 0,
+        spanGaps: true,
+        tension: 0,
+      },
       // 진입일(마지막 봉) 강조 — 캔들과 겹치지 않도록 저가 아래에 표시
       {
         type: 'line',
@@ -1325,8 +2094,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
 
     const xAxisOpts = {
       type: 'category',
-      ticks: { color: '#3d6080', maxRotation: 45, autoSkip: true, callback: (v, i) => labels[i]?.slice(5) },
-      grid: { color: 'rgba(58,159,216,.06)' },
+      ticks: { color: '#8A8F9E', maxRotation: 45, autoSkip: true, callback: (v, i) => labels[i]?.slice(5) },
+      grid: { color: 'rgba(17,24,68,.06)' },
     };
     // 거래량 차트는 위 가격 차트와 날짜축을 공유하므로 자체 날짜 라벨은 숨김
     const xAxisOptsVolume = { ...xAxisOpts, ticks: { ...xAxisOpts.ticks, display: false } };
@@ -1344,11 +2113,11 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
         plugins: {
           legend: {
             display: true, position: 'top',
-            labels: { color: '#7fa8cc', boxWidth: 12, font: { size: 10.5 }, filter: item => item.text && item.text !== t.name },
+            labels: { color: '#585F7A', boxWidth: 12, font: { size: 10.5 }, filter: item => item.text && item.text !== t.name },
           },
           tooltip: {
-            backgroundColor: '#071a2e', borderColor: 'rgba(58,159,216,.35)', borderWidth: 1,
-            titleColor: '#ddeeff', bodyColor: '#7fa8cc', padding: 10,
+            backgroundColor: '#111844', borderColor: 'rgba(107,130,224,.40)', borderWidth: 1,
+            titleColor: '#EEF0F4', bodyColor: '#A9B8F2', padding: 10,
             callbacks: {
               label: ctx => {
                 if (ctx.datasetIndex === 0) {
@@ -1356,7 +2125,11 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
                   return `  시:${v.o.toLocaleString()} 고:${v.h.toLocaleString()} 저:${v.l.toLocaleString()} 종:${v.c.toLocaleString()}`;
                 }
                 if (ctx.dataset.label === '진입일') return ctx.parsed.y == null ? null : `  진입일 종가: ${bars[entryIdx].close.toLocaleString()}원`;
-                return ctx.parsed.y == null ? null : `  ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()}`;
+                if (ctx.parsed.y == null) return null;
+                const close = bars[ctx.dataIndex].close;
+                const pct = ((ctx.parsed.y - close) / close) * 100;
+                const sign = pct > 0 ? '+' : '';
+                return `  ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString()} (${sign}${pct.toFixed(2)}%)`;
               },
             },
           },
@@ -1367,8 +2140,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
             position: 'left',
             min: yMin - yPad,
             max: yMax + yPad,
-            ticks: { color: '#3d6080', callback: v => v.toLocaleString() },
-            grid: { color: 'rgba(58,159,216,.06)' },
+            ticks: { color: '#8A8F9E', callback: v => v.toLocaleString() },
+            grid: { color: 'rgba(17,24,68,.06)' },
           },
         },
       },
@@ -1382,7 +2155,7 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
         datasets: [{
           label: '거래량',
           data: bars.map(b => b.volume),
-          backgroundColor: 'rgba(127,168,204,.45)',
+          backgroundColor: bars.map(b => b.close >= b.open ? 'rgba(255,90,95,.55)' : 'rgba(96,165,250,.55)'),
         }],
       },
       options: {
@@ -1393,8 +2166,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: '#071a2e', borderColor: 'rgba(58,159,216,.35)', borderWidth: 1,
-            titleColor: '#ddeeff', bodyColor: '#7fa8cc', padding: 10,
+            backgroundColor: '#111844', borderColor: 'rgba(127,192,230,.35)', borderWidth: 1,
+            titleColor: '#F2F2F2', bodyColor: '#D1F7FF', padding: 10,
             callbacks: { label: ctx => `  거래량: ${ctx.parsed.y.toLocaleString()}` },
           },
         },
@@ -1402,8 +2175,8 @@ async function renderExplainChart(t, priceId = 'ch-explain-price', volumeId = 'c
           x: xAxisOptsVolume,
           y: {
             position: 'left',
-            ticks: { color: '#3d6080', callback: v => v.toLocaleString() },
-            grid: { color: 'rgba(58,159,216,.06)' },
+            ticks: { color: '#8A8F9E', callback: v => v.toLocaleString() },
+            grid: { color: 'rgba(17,24,68,.06)' },
           },
         },
       },
@@ -1431,7 +2204,11 @@ let loadedPeriodKey = null;  // 마지막으로 로드한 기간 (중복 로드 
 async function loadPeriod(start, end) {
   loadedPeriodKey = start + '|' + end;
   const body = document.getElementById('period-body');
-  body.innerHTML = '<div class="loading"><div class="spinner"></div>기간분석 로딩 중... (' + start + ' ~ ' + end + ')';
+  body.innerHTML = `
+    <div class="cards" aria-hidden="true">
+      ${Array.from({length:5}).map(() => '<div class="card skeleton" style="height:92px"></div>').join('')}
+    </div>
+    <div class="loading"><div class="spinner"></div>기간분석 로딩 중... (${start} ~ ${end})</div>`;
 
   // 기존 Chart 인스턴스 파기
   Object.values(periodCharts).forEach(c => c.destroy());
@@ -1447,23 +2224,30 @@ async function loadPeriod(start, end) {
       apiFetch(`/api/period/dominant-top-stocks?start=${start}&end=${end}`).catch(() => null),
     ]);
 
+    const periodNotice = th.notice || ld.notice || ev.notice || tr?.notice || dom?.notice || domTop?.notice;
+    const noticeHtml = periodNotice ? `
+      <div class="sec-hint" style="margin-bottom:12px;border:1px solid var(--border-bright);background:rgba(255,180,60,.08);padding:10px 14px;border-radius:8px">
+        ${periodNotice.map(n => `⚠️ ${n}`).join('<br>')}
+      </div>` : '';
+
     body.innerHTML = `
       <div class="sec-hint" style="margin-bottom:12px">조회 기간: <strong>${start} ~ ${end}</strong> — 기간을 바꾼 뒤 '조회'를 누르면 모든 차트가 해당 기간으로 재계산됩니다</div>
+      ${noticeHtml}
       <!-- §1 테마 -->
       <div class="period-grid2">
         <div class="chart-box">
-          <h3>상승 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
+          <h3 class="top-rule" style="background:#EEF0F4;margin:-24px -24px 16px;padding:22px 24px 18px;border-radius:26px 26px 0 0">상승 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
           <div class="sub-note">크기 = 거래대금 &nbsp;·&nbsp; 색 = 기간수익률(테마 내 종목 평균, 진할수록 높음)</div>
           <div class="treemap-wrap" id="tm-rising"></div>
         </div>
         <div class="chart-box">
-          <h3>하락 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
+          <h3 class="top-rule" style="background:#EEF0F4;margin:-24px -24px 16px;padding:22px 24px 18px;border-radius:26px 26px 0 0">하락 테마 TOP10 <small style="color:var(--text-muted);font-weight:400">(기간수익률 기준)</small></h3>
           <div class="sub-note">크기 = 거래대금 &nbsp;·&nbsp; 색 = 하락폭 (진할수록 큰 하락)</div>
           <div class="treemap-wrap" id="tm-falling"></div>
         </div>
       </div>
       <div class="chart-box" style="margin-bottom:12px">
-        <h3>📈 테마 추이 <small style="color:var(--text-muted);font-weight:400">(기간 시작일 대비 누적수익률, 테마 내 종목 단순평균)</small></h3>
+        <h3 style="background:#EEF0F4;margin:-24px -24px 16px;padding:22px 24px 18px;border-radius:26px 26px 0 0">📈 테마 추이 <small style="color:var(--text-muted);font-weight:400">(기간 시작일 대비 누적수익률, 테마 내 종목 단순평균)</small></h3>
         <div class="sec-hint">최대 5개 테마를 선택하여 코스피(점선) 대비 추이를 비교하세요 — 코스피보다 위에 있으면 시장 대비 초과수익</div>
         <div class="theme-chips" id="trendChips"></div>
         <div class="trend-legend" id="trendLegend"></div>
@@ -1472,33 +2256,63 @@ async function loadPeriod(start, end) {
       </div>
 
       <div class="chart-box" id="period-stock-chart" style="margin-bottom:12px">
-        <h3 id="period-stock-chart-title">📈 종목 차트 <small style="color:var(--text-muted);font-weight:400">(아래 표에서 종목을 클릭하면 표시됩니다)</small></h3>
+        <div style="background:#EEF0F4;margin:-24px -24px 16px;padding:18px 24px 14px;border-radius:26px 26px 0 0">
+          <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+            <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">테마 선택
+              <select id="period-theme-select" onchange="onPeriodThemeSelect()" style="background:var(--bg-input);border:1px solid var(--border);color:var(--Indigo);padding:5px 8px;border-radius:6px;font-size:12.5px">
+                <option value="">선택...</option>
+              </select>
+            </label>
+            <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:6px">종목 선택
+              <select id="period-stock-select" onchange="onPeriodStockSelect()" disabled style="background:var(--bg-input);border:1px solid var(--border);color:var(--Indigo);padding:5px 8px;border-radius:6px;font-size:12.5px">
+                <option value="">테마를 먼저 선택하세요</option>
+              </select>
+            </label>
+            <span style="font-size:12px;color:var(--text-muted)">분석기간: <strong id="period-chart-range" style="color:var(--Indigo)">-</strong></span>
+          </div>
+          <h3 id="period-stock-chart-title" style="margin-bottom:0">📈 종목 차트 <small style="color:var(--text-muted);font-weight:400">(위에서 테마·종목을 선택하거나, 아래 표에서 종목을 클릭하면 표시됩니다)</small></h3>
+        </div>
         <div class="chart-container" style="height:300px"><canvas id="ch-period-price"></canvas></div>
         <div class="chart-container" style="height:110px;margin-top:4px"><canvas id="ch-period-volume"></canvas></div>
       </div>
 
-      <!-- §3 압도적 테마 종목 + 강세주도 이벤트 -->
-      <div class="period-grid2" style="margin-bottom:12px">
-        <div class="chart-box">
-          <h3>압도적 테마 종목 <small style="color:var(--text-muted);font-weight:400">(주도 테마일 1~2위)</small></h3>
-          <div class="sub-note">압도적 주도 테마일에 해당 테마 내 거래대금 1~2위였던 종목 — 거래대금은 천억원 단위</div>
-          <div class="table-wrap" id="dominant-top-table"></div>
-        </div>
-        <div class="chart-box">
-          <h3>강세주도 이벤트 <small style="color:var(--text-muted);font-weight:400">(기여점수 ≥7)</small></h3>
-          <div class="sub-note">${ev.total}건</div>
-          <div class="table-wrap" id="events-table"></div>
-        </div>
-      </div>
-
-      <!-- §2 주도종목 (맨 아래) -->
-      <div class="section" style="margin-bottom:12px">
-        <div class="section-header">
-          <h2>강세 주도종목</h2>
-          <span style="font-size:12px;color:var(--text-muted)">복합점수 = 평균기여/10 × log1p(등장일수) × (1+순위모멘텀)</span>
+      <!-- §3 종목별 강세 (압도적 테마 종목 / 당일 강세 종목 / 강세 지속 종목 — 동시 비교) -->
+      <div class="section strat-section" style="margin-bottom:12px">
+        <div class="section-header section-header--Seagull">
+          <h2>🔥 종목별 강세</h2>
+          <span style="font-size:12px;color:var(--text-muted)">3개 관점을 동시에 비교 · 카드를 클릭하면 차트가 바로 열립니다</span>
         </div>
         <div class="section-body">
-          <div class="table-wrap" id="leaders-table"></div>
+          <div class="period-grid3">
+
+            <div class="chart-box chart-box--strength">
+              <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('dom-note',this)">설명 ▾</button></div>
+              <h3 style="margin-bottom:6px">압도적 테마 종목 <small style="color:var(--text-muted);font-weight:400">(주도 테마일 1~2위)</small></h3>
+              <div class="sec-hint cond-text" id="dom-note" style="display:none">압도적 주도 테마일에 해당 테마 내 거래대금 1~2위였던 종목 — 거래대금은 천억원 단위</div>
+              <div class="stock-strip" id="dom-strip"></div>
+              <button class="mini-toggle" onclick="toggleCollapse('dom-tablewrap',this)">전체 표 보기 ▾</button>
+              <div id="dom-tablewrap" style="display:none"><div class="table-wrap" id="dominant-top-table"></div></div>
+            </div>
+
+            <div class="chart-box chart-box--strength">
+              <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('event-note',this)">설명 ▾</button></div>
+              <h3 style="margin-bottom:6px">당일 강세 종목 <small style="color:var(--text-muted);font-weight:400">(기여점수 ≥7)</small></h3>
+              <div class="sec-hint cond-text" id="event-note" style="display:none">${ev.total}건 — 그날 하루 기여점수가 7점 이상이었던 단발 강세 이벤트</div>
+              <div class="stock-strip" id="event-strip"></div>
+              <button class="mini-toggle" onclick="toggleCollapse('event-tablewrap',this)">전체 표 보기 ▾</button>
+              <div id="event-tablewrap" style="display:none"><div class="table-wrap" id="events-table"></div></div>
+            </div>
+
+            <div class="chart-box chart-box--strength">
+              <div class="strat-toolbar"><button class="mini-toggle" onclick="toggleCollapse('leader-note',this)">설명 ▾</button></div>
+              <h3 style="margin-bottom:6px">강세 지속 종목</h3>
+              <div class="sec-hint cond-text" id="leader-note" style="display:none">복합점수 = 평균기여/10 × log1p(등장일수) × (1+순위모멘텀)</div>
+              <div class="stock-strip" id="leader-strip"></div>
+              <button class="mini-toggle" onclick="toggleCollapse('leader-tablewrap',this)">전체 표 보기 ▾</button>
+              <div id="leader-tablewrap" style="display:none"><div class="table-wrap" id="leaders-table"></div></div>
+            </div>
+
+          </div>
         </div>
       </div>`;
 
@@ -1509,11 +2323,17 @@ async function loadPeriod(start, end) {
     renderLeadersTable(ld.leaders || []);
     renderDominantTopStocks(domTop?.stocks || []);
     renderEventsTable(ev.events || []);
+    renderPeriodStrip('dom-strip', domTop?.stocks || [], 'dom');
+    renderPeriodStrip('event-strip', ev.events || [], 'event');
+    renderPeriodStrip('leader-strip', ld.leaders || [], 'leader');
+    initPeriodThemeStockSelect(th.rising || [], th.falling || [], start, end);
 
-    // 디폴트: 압도적 테마 종목 맨 위 종목 차트 노출
-    if (!periodStockSelected && domTop?.stocks?.length) {
-      const s0 = domTop.stocks[0];
-      selectPeriodStock(s0.code, s0.name || s0.code, s0.date, true);
+    // 디폴트: 상승 테마 TOP10 트리맵에서 가장 큰 셀(거래대금 1위) 테마의 1위 종목을 자동 표시
+    const topRisingTheme = (th.rising || []).reduce(
+      (max, t) => (!max || (t.total_amount || 0) > (max.total_amount || 0)) ? t : max, null);
+    if (topRisingTheme && topRisingTheme.top_stocks?.length) {
+      document.getElementById('period-theme-select').value = topRisingTheme.theme1;
+      onPeriodThemeSelect();
     }
 
   } catch(e) {
@@ -1651,11 +2471,11 @@ function renderThemeTrend() {
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#071a2e',
-          borderColor: 'rgba(58,159,216,.35)',
+          backgroundColor: '#111844',
+          borderColor: 'rgba(127,192,230,.35)',
           borderWidth: 1,
-          titleColor: '#ddeeff',
-          bodyColor: '#7fa8cc',
+          titleColor: '#F2F2F2',
+          bodyColor: '#D1F7FF',
           padding: 10,
           callbacks: {
             label: ctx => {
@@ -1667,8 +2487,8 @@ function renderThemeTrend() {
         },
       },
       scales: {
-        x: { ticks: { color: '#3d6080', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(58,159,216,.06)' } },
-        y: { ticks: { color: '#3d6080', callback: v => (v >= 0 ? '+' : '') + v + '%' }, grid: { color: 'rgba(58,159,216,.06)' } },
+        x: { ticks: { color: '#8A8F9E', maxRotation: 45, autoSkip: true }, grid: { color: 'rgba(17,24,68,.06)' } },
+        y: { ticks: { color: '#8A8F9E', callback: v => (v >= 0 ? '+' : '') + v + '%' }, grid: { color: 'rgba(17,24,68,.06)' } },
       },
     },
   });
@@ -1926,10 +2746,19 @@ function showTmTooltip(e, item, type) {
   const ret = item.cumret_pct ?? 0;
   const retEl = document.getElementById('tt-cumret');
   retEl.textContent = (ret > 0 ? '+' : '') + ret.toFixed(2) + '%';
-  retEl.style.color = ret >= 0 ? '#e05e30' : '#3a9fd8';
+  retEl.style.color = ret >= 0 ? '#FF5A5F' : '#60A5FA';
   document.getElementById('tt-amount').textContent = fmtAmount(item.total_amount);
   document.getElementById('tt-upratio').textContent = ((item.up_ratio ?? 0) * 100).toFixed(1) + '%';
   document.getElementById('tt-days').textContent = (item.appear_days ?? '-') + '일';
+  document.getElementById('tt-topstock-label').textContent = type === 'rising' ? '테마 내 1~3위 종목' : '테마 내 최하위 1~3위 종목';
+  const topStocks = item.top_stocks && item.top_stocks.length ? item.top_stocks
+    : (item.top_stock_name != null ? [{ name: item.top_stock_name, cumret_pct: item.top_stock_cumret_pct }] : []);
+  document.getElementById('tt-topstocks').innerHTML = topStocks.length ? topStocks.map((s, i) => {
+    const r = s.cumret_pct;
+    const retStr = r == null ? '-' : (r > 0 ? '+' : '') + r.toFixed(1) + '%';
+    const retColor = r == null ? '' : (r >= 0 ? '#FF5A5F' : '#60A5FA');
+    return `<div class="tt-row"><span class="tt-key">${i + 1}위 ${s.name ?? '-'}</span><span class="tt-val" style="color:${retColor}">${retStr}</span></div>`;
+  }).join('') : '<div class="tt-row"><span class="tt-key">-</span></div>';
   tt.style.display = 'block';
   moveTmTooltip(e);
 }

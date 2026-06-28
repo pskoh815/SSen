@@ -40,9 +40,17 @@ DEFAULT_PARQUET_DIR = ROOT / "data" / "parquet"
 # ── 데이터 로더 ───────────────────────────────────────────────────────────────
 
 def _load_parquet(parquet_dir: Path, start: Optional[date], end: Optional[date]) -> pd.DataFrame:
-    """fact_daily_stock Parquet 로드. start/end 필터 적용."""
-    stock_dir = parquet_dir / "fact_daily_stock"
-    parts = sorted(p for p in stock_dir.iterdir() if p.is_dir())
+    """fact_daily_stock Parquet 로드. start/end 필터 적용.
+
+    fact_daily_stock_pre2020(2026-06-23 도입 — KRX OPEN API 백필 + calc_derived.py
+    동일 공식 재적용한 2015~2019 구간, fact_daily_stock과 완전히 동일한 스키마/dtype)도
+    함께 스캔 — 이 store가 있으면 E3 백테스트(derived_trades/derived_leader_regime/
+    derived_theme_daily)도 2015년부터 정상 계산된다."""
+    stock_dirs = [parquet_dir / "fact_daily_stock", parquet_dir / "fact_daily_stock_pre2020"]
+    parts = sorted(
+        p for stock_dir in stock_dirs if stock_dir.exists()
+        for p in stock_dir.iterdir() if p.is_dir()
+    )
 
     dfs = []
     for part in parts:
@@ -230,6 +238,17 @@ def compute_trades(
         except (TypeError, ValueError):
             return None
 
+    # 인적분할/합병/상호변경 가드 (2026-06-23 발견): 보유기간 중 종목명이 바뀌면
+    # 같은 종목코드라도 가격이 인위적으로 재평가되어(예: BGF리테일→BGF 인적분할 시
+    # 79,100원→15,350원, -80.6%) 실제로는 보존된 가치(분할로 받은 신주 별도 보유)가
+    # "손실"로 잘못 계산된다. 242건 중 1건이 누적수익률을 -85%→-23%로 왜곡시킨 사례
+    # 확인 — 분할비율을 모르는 한 정확한 보정이 불가능하므로 해당 트레이드는 제외한다.
+    def _name_changed(code: str, start_d: date, end_d: date) -> bool:
+        if start_d is None or end_d is None:
+            return False
+        sub = df.loc[(df["code"] == code) & (df["date"] >= start_d) & (df["date"] <= end_d), "name"]
+        return sub.dropna().nunique() > 1
+
     trades = []
     for _, regime in regimes.iterrows():
         if regime["duration_days"] < params.min_regime_days:
@@ -284,6 +303,11 @@ def compute_trades(
             if exit_date_raw:
                 exit_price = get_price(exit_date_raw, code)
                 exit_reason = "regime_end"
+
+        # 보유기간 중 종목명 변경(분할/합병/상호변경) 시 가격이 인위적으로 재평가되어
+        # 실제 보존된 가치가 손실로 잘못 계산되므로 해당 트레이드는 제외
+        if exit_date and _name_changed(code, entry_date, exit_date):
+            continue
 
         # 수익률 계산
         pnl_pct = None

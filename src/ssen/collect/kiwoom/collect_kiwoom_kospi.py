@@ -22,8 +22,11 @@ from pathlib import Path
 import pandas as pd
 from pykiwoom.kiwoom import Kiwoom
 
+from _watchdog import Watchdog  # 4개 키움 수집 스크립트 공용 (같은 디렉터리)
+
 OUTPUT_DIR = Path(r"C:\MyClaude\ssen-dashboard\data\incoming\kiwoom")
 INDEX_CODE = "001"  # 코스피 종합
+WATCHDOG_TIMEOUT_SEC = 60  # 단일 TR 호출이라 60초면 충분 (2026-06-18 통일 적용)
 
 
 def fetch_kospi_daily(kiwoom: Kiwoom, end_date: date) -> pd.DataFrame:
@@ -64,14 +67,19 @@ def main():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+    watchdog = Watchdog(WATCHDOG_TIMEOUT_SEC)
+    watchdog.reset()  # CommConnect 자체가 멈추는 경우(중복 로그인 팝업 등)도 대비
+
     kiwoom = Kiwoom()
     kiwoom.CommConnect(block=True)
+    watchdog.reset()
     if kiwoom.GetConnectState() != 1:
         print("[오류] 키움 OpenAPI 로그인 실패")
         sys.exit(1)
     print(f"[로그인 성공] 계좌: {kiwoom.GetLoginInfo('ACCNO')}")
 
     full = fetch_kospi_daily(kiwoom, end)
+    watchdog.stop()
     if full.empty:
         print("[오류] 수집 결과가 비어있음")
         sys.exit(1)
